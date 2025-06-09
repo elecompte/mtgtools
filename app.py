@@ -16,6 +16,7 @@ def scuteswarm():
             initial = int(request.form['initial'])
             lands = int(request.form['lands'])
             final_swarms = initial * (2 ** lands)
+            initial = final_swarms
         except Exception:
             final_swarms = None
     return render_template('scuteswarm.html', final_swarms=final_swarms, initial=initial, lands=lands)
