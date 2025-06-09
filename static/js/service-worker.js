@@ -3,9 +3,9 @@ self.addEventListener('install', event => {
     caches.open('scuteswarm-cache-v1').then(cache => {
       return cache.addAll([
         '/',
-        '/static/lands.jpg',
-        '/static/scuteswarm.jpg',
-        '/static/scuteswarm.png',
+        '/static/img/lands.jpg',
+        '/static/img/scuteswarm.jpg',
+        '/static/img/scuteswarm.png',
         '/static/manifest.json'
       ]);
     })

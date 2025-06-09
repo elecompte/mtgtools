@@ -15,7 +15,7 @@ def index():
         except ValueError:
             final_swarms = "Invalid input. Please enter integers only!"
 
-    return render_template("index.html", final_swarms=final_swarms, initial=initial, lands=lands)
+    return render_template("scuteswarm.html", final_swarms=final_swarms, initial=initial, lands=lands)
 
 if __name__ == "__main__":
     app.run(debug=True)

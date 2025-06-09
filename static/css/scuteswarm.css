@@ -1,0 +1,119 @@
+body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .top-row {
+            display: flex;
+            flex: 1;
+        }
+        .section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .tan {
+            background-image: url('/static/img/lands.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        .blue {
+            background-color: #2196F3;
+            color: white;
+            text-align: center;
+            font-size: 1.5em;
+        }
+        .green {
+            background-image: url('/static/img/scuteswarm.png');
+            background-size: cover;
+            background-position: center;
+}
+        .result {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            
+        }
+        .input-label {
+            font-size: 1.5em;
+            color: black;
+            font-weight: bold;
+            
+        }
+        .input-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            height: 50%;
+            opacity: .7;
+        }
+        .input-controls button {
+            width: 20%;
+            height: 100%;
+            font-size: 2em;
+            border: none;
+            background-color: #555;
+            color: white;
+        }
+        .input-controls input[type="number"] {
+            width: 50%;
+            height: 100%;
+            font-size: 2em;
+            text-align: center;
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+        .input-group input::-webkit-outer-spin-button,
+        .input-group input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        button {
+            height: 50px;
+            width: 100%;
+            font-size: 1.2em;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .tan::before, .green::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.4); /* white overlay, adjust opacity as needed */
+            z-index: 1;
+        }
+        .section {
+            position: relative;
+            z-index: 0;
+        }
+        .input-group, .input-label, .input-controls {
+            position: relative;
+            z-index: 2;
+        }
