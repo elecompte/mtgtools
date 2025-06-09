@@ -3,6 +3,9 @@
 <head>
     <title>Scute Swarm Calculator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#1976d2">
+    <link rel="icon" href="/static/scuteswarm.png">
     <style>
         body {
             margin: 0;
@@ -73,6 +76,7 @@
             height: 50%;
             font-size: 2em;
             text-align: center;
+            appearance: textfield;
             -moz-appearance: textfield;
         }
         .input-group input::-webkit-outer-spin-button,
@@ -104,6 +108,11 @@
         const input = document.getElementById(id);
         const value = parseInt(input.value, 10);
         input.value = isNaN(value) || value <= 0 ? 0 : value - 1;
+    }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/static/service-worker.js');
+      });
     }
 </script>
 </head>
