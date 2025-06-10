@@ -54,11 +54,25 @@
             </div>           
         </div>
         <button type="submit">Calculate</button>
-        <div class="section blue result">
-            {% if final_swarms is not none %}
-                You will have {{ "{:,}".format(final_swarms) }} Scute Swarms.
-            {% endif %}
+        <div class="section blue result" id="result-section">
+            <span id="final-swarms-value" style="font-size: 100pt; font-weight: bold; width: 100%; text-align: center; display: block;"></span>
         </div>
+        <script>
+        function updateFinalSwarms() {
+            const initial = parseInt(document.getElementById('initial').value, 10) || 0;
+            const lands = parseInt(document.getElementById('lands').value, 10) || 0;
+            const finalSwarms = initial * Math.pow(2, lands);
+            const el = document.getElementById('final-swarms-value');
+            if (initial > 0 && lands >= 0) {
+                el.textContent = finalSwarms.toLocaleString();
+            } else {
+                el.textContent = '';
+            }
+        }
+        document.getElementById('initial').addEventListener('input', updateFinalSwarms);
+        document.getElementById('lands').addEventListener('input', updateFinalSwarms);
+        updateFinalSwarms();
+        </script>
     </form>
 </body>
 </html>
