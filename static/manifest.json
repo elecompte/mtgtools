@@ -1,6 +1,6 @@
 {
-  "name": "ScuteSwarm",
-  "short_name": "ScuteSwarm",
+  "name": "MTG Tools",
+  "short_name": "MTGTools",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
