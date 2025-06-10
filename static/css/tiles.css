@@ -1,4 +1,8 @@
 /* Responsive tile grid for tool selection */
+body {
+    background-color: #525252;
+}
+
 .tiles-container {
     display: grid;
     grid-template-columns: 1fr;
