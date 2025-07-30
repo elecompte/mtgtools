@@ -74,7 +74,7 @@
         function updateFinalSwarms() {
             const initial = parseInt(document.getElementById('initial').value, 10) || 0;
             const lands = parseInt(document.getElementById('lands').value, 10) || 0;
-            const doubler = parseInt(document.getElementById('doubler').value, 10) || 0;
+            const doubler = parseInt(document.getElementById('doubler').value, 10) || 1;
             // Use the same formula as backend
             const finalSwarms = initial + initial * lands * Math.pow(2, doubler);
             const el = document.getElementById('final-swarms-value');

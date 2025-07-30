@@ -13,7 +13,7 @@ def scuteswarm():
     final_swarms = 0
     initial = 0
     lands = 0
-    doubler = 0
+    doubler = 1
     if request.method == 'POST':
         try:
             initial = int(request.form['initial'])
