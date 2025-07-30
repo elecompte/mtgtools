@@ -23,10 +23,11 @@ def scuteswarm():
             while i < lands:
                 final_swarms += initial + (initial * (doubler + 1))
                 i += 1
+            initial
 
         except Exception:
             final_swarms = None
-    return render_template('scuteswarm.html', final_swarms=final_swarms, initial=initial, lands=lands, doubler=doubler)
+    return render_template('scuteswarm.html', final_swarms=final_swarms, initial=final_swarms, lands=lands, doubler=doubler)
 
 if __name__ == "__main__":
     app.run(debug=True)
