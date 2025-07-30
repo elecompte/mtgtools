@@ -10,18 +10,23 @@ def index():
 
 @app.route('/scuteswarm', methods=['GET', 'POST'])
 def scuteswarm():
-    final_swarms = None
+    final_swarms = 0
     initial = 0
     lands = 0
+    doubler = 0
     if request.method == 'POST':
         try:
             initial = int(request.form['initial'])
             lands = int(request.form['lands'])
-            final_swarms = initial * (2 ** lands)
-            initial = final_swarms
+            doubler = int(request.form.get('doubler', 0))
+            i = 0
+            while i < lands:
+                final_swarms += initial + (initial * (doubler + 1))
+                i += 1
+
         except Exception:
             final_swarms = None
-    return render_template('scuteswarm.html', final_swarms=final_swarms, initial=initial, lands=lands)
+    return render_template('scuteswarm.html', final_swarms=final_swarms, initial=initial, lands=lands, doubler=doubler)
 
 if __name__ == "__main__":
     app.run(debug=True)

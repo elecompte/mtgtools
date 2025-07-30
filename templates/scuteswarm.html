@@ -47,21 +47,36 @@
                     <div class="input-label">Lands Played</div>
                     <div class="input-controls">
                         <button type="button" onclick="decrement('lands')">-</button>
-                        <input id="lands" type="number" name="lands" placeholder="Lands Played" value="0" required>
+                        <input id="lands" type="number" name="lands" placeholder="Lands Played" value="{{ lands }}" required>
                         <button type="button" onclick="increment('lands')">+</button>
                     </div>
                 </div> 
-            </div>           
+            </div>
+            <div class="section blue">
+                <div class="input-group">
+                    <div class="input-label">Doublers</div>
+                    <div class="input-controls">
+                        <button type="button" onclick="decrement('doubler')">-</button>
+                        <input id="doubler" type="number" name="doubler" placeholder="Doublers" value="{{ doubler }}" required>
+                        <button type="button" onclick="increment('doubler')">+</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <button type="submit">Calculate</button>
         <div class="section blue result" id="result-section">
-            <span id="final-swarms-value" style="font-size: 100pt; font-weight: bold; width: 100%; text-align: center; display: block;"></span>
+            <span id="final-swarms-value" style="font-size: 100pt; font-weight: bold; width: 100%; text-align: center; display: block;">
+                {% if final_swarms is not none %}{{ final_swarms | int | string }}{% endif %}
+            </span>
         </div>
         <script>
+        // Only update the value if the user changes the inputs, not on page load
         function updateFinalSwarms() {
             const initial = parseInt(document.getElementById('initial').value, 10) || 0;
             const lands = parseInt(document.getElementById('lands').value, 10) || 0;
-            const finalSwarms = initial * Math.pow(2, lands);
+            const doubler = parseInt(document.getElementById('doubler').value, 10) || 0;
+            // Use the same formula as backend
+            const finalSwarms = initial + initial * lands * Math.pow(2, doubler);
             const el = document.getElementById('final-swarms-value');
             if (initial > 0 && lands >= 0) {
                 el.textContent = finalSwarms.toLocaleString();
@@ -71,7 +86,8 @@
         }
         document.getElementById('initial').addEventListener('input', updateFinalSwarms);
         document.getElementById('lands').addEventListener('input', updateFinalSwarms);
-        updateFinalSwarms();
+        document.getElementById('doubler').addEventListener('input', updateFinalSwarms);
+        // Do NOT call updateFinalSwarms() on page load, so backend value is shown initially
         </script>
     </form>
 </body>
