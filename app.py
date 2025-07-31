@@ -21,7 +21,7 @@ def scuteswarm():
             doubler = int(request.form.get('doubler', 0))
             i = 0
             while i < lands:
-                final_swarms += initial + (initial * (doubler + 1))
+                final_swarms += initial + (initial * (doubler))
                 i += 1
             initial
 
