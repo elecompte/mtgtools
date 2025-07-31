@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Import Results</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/scuteswarm.css">
+    <link rel="stylesheet" href="/static/css/tiles.css">
+</head>
+<body style="background-color: #525252; margin: 10px;">
+    <div class="container" style="height:auto; min-height:0;">
+        <div class="section" style="background:none; align-items:flex-start; justify-content:flex-start; min-height:0;">
+            <div class="input-group">
+                <div class="input-label">Import Results</div>
+                {% for store, results in results_by_store.items() %}
+                <div style="margin-bottom:30px;">
+                    <h2 style="color:#2196F3;">{{ store }}</h2>
+                    <div style="width:100vw; max-width:100vw; overflow-x:auto;">
+                        <table style="width:100%; background:white; border-radius:8px; overflow:hidden;">
+                            <thead style="background:#2196F3; color:white;">
+                                <tr>
+                                    <th style="width:30%;">Name</th>
+                                    <th style="width:30%;">URL</th>
+                                    <th style="width:20%;">In Stock</th>
+                                    <th style="width:20%;">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for card in results %}
+                                <tr>
+                                    <td>{{ card.name }}</td>
+                                    <td><a href="{{ card.url }}" target="_blank">Link</a></td>
+                                    <td>{{ card.inStock }}</td>
+                                    <td>{% if card.price is not none %}${{ '%.2f'|format(card.price|float) }}{% else %}-{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if not results %}
+                        <div style="color:#888; margin-top:10px;">No results for this store.</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

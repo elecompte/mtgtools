@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Import MTG Cards</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/scuteswarm.css">
+    <link rel="stylesheet" href="/static/css/tiles.css">
+    <style>
+    #loadingOverlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(33,150,243,0.85);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        transition: opacity 0.4s;
+        opacity: 0;
+        pointer-events: none;
+    }
+    #loadingOverlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .loader {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #1976d2;
+        border-radius: 50%;
+        width: 70px;
+        height: 70px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .loading-text {
+        color: white;
+        font-size: 1.5em;
+        font-weight: bold;
+        text-shadow: 0 2px 8px #1976d2;
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section tan">
+            <form id="importForm" enctype="multipart/form-data" method="POST">
+                <div class="input-group">
+                    <div class="input-label">Import Card List</div>
+                    <input type="file" id="fileInput" name="file" accept=".txt" style="margin-bottom:10px;">
+                    <div style="margin:10px 0; color:#333; font-weight:bold;">OR</div>
+                    <textarea id="cardNames" name="cardNames" rows="6" cols="40" placeholder="Paste card names here, one per line"></textarea>
+                    <button type="submit" style="margin-top:15px;">Import</button>
+                </div>
+            </form>
+            <div id="importStatus" style="margin-top:20px; color:#2196F3;"></div>
+        </div>
+    </div>
+    <div id="loadingOverlay">
+        <div class="loader"></div>
+        <div class="loading-text">Loading, please wait...</div>
+    </div>
+    <script>
+    document.getElementById('importForm').addEventListener('submit', function(e) {
+        var overlay = document.getElementById('loadingOverlay');
+        overlay.classList.add('active');
+        // Let the browser submit the form normally, so Flask renders the results page
+        // Do not use fetch or preventDefault
+    });
+    </script>
+</body>
+</html>

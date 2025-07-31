@@ -83,31 +83,35 @@ def lookup():
             return jsonify(results)
     return jsonify([])
 
-@app.route('/import', methods=['POST'])
+@app.route('/import', methods=['GET', 'POST'])
 def import_cards():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    file = request.files['file']
-    content = file.read().decode('utf-8')
-    card_names = [line.strip() for line in content.splitlines() if line.strip()]
+    if request.method == 'GET':
+        return render_template('import.html')
+    # Accept file upload or textarea
+    file = request.files.get('file')
+    card_names = []
+    # If user POSTs cardNames (from export form), use that
+    if not file and request.form.get('cardNames'):
+        content = request.form['cardNames']
+        card_names = [line.strip() for line in content.splitlines() if line.strip()]
+    elif file:
+        content = file.read().decode('utf-8')
+        card_names = [line.strip() for line in content.splitlines() if line.strip()]
+    else:
+        return render_template('import.html', error="No file uploaded")
     clean_names = [line.split(' ', 1)[1] if line.split(' ', 1)[0].isdigit() else line for line in card_names]
     limited_names = clean_names[:50]
-    results = []
+    results_by_store = {store['storeName']: [] for store in STORES}
+    all_results = []
     for name in limited_names:
         for store in STORES:
             store_results = lookup_card_at_store(name, store)
             if store_results:
-                results.extend(store_results)
+                results_by_store[store['storeName']].extend(store_results)
+                all_results.extend(store_results)
                 break
-    # Write CSV to temp file
-    fields = ['name', 'url', 'inStock', 'price', 'store']
-    temp = tempfile.NamedTemporaryFile(delete=False, suffix='.csv')
-    with open(temp.name, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fields)
-        writer.writeheader()
-        for row in results:
-            writer.writerow(row)
-    return send_file(temp.name, mimetype='text/csv', as_attachment=True, download_name='results.csv')
+    # Always render results page, never send CSV
+    return render_template('import_results.html', results_by_store=results_by_store, all_results=all_results, card_names=limited_names)
 
 @app.route('/')
 def index():
