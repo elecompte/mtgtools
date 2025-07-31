@@ -2,6 +2,7 @@ services:
   scuteswarm:
     image: mtgtools:latest
     container_name: mtgtools
+    restart: always
     build:
       context: .
       dockerfile: ./Dockerfile
