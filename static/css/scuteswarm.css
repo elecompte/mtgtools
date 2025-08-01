@@ -9,15 +9,26 @@ body {
         }
         .top-row {
             display: flex;
-            flex: 1;
+            flex: none;
+            height: 30vh;
+            min-height: 100px;
+            max-height: 250px;
+            width: 100%;
         }
         .section {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 0px;
             box-sizing: border-box;
+            position: relative;
+            z-index: 0;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: stretch;
+            height: 100%;
+            min-height: 0;
         }
         
         .tan {
@@ -26,7 +37,7 @@ body {
             background-position: center;
         }
         .blue {
-            background-color: #2196F3;
+            background-color: rgb(61,61,61);
             color: white;
             text-align: center;
             font-size: 1.5em;
@@ -45,17 +56,22 @@ body {
         .input-group {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            align-items: stretch;
+            justify-content: flex-end;
             width: 100%;
             height: 100%;
-            
+            position: relative;
+            z-index: 2;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         .input-label {
-            font-size: 1.5em;
+            font-size: 2em;
             color: black;
             font-weight: bold;
             padding-bottom: 10px;
+            text-align: center;
             
         }
         .input-controls {
@@ -67,7 +83,7 @@ body {
             opacity: .7;
         }
         .input-controls button {
-            width: 20%;
+            width: 25%;
             height: 97%;
             font-size: 2em;
             border: none;
@@ -110,11 +126,114 @@ body {
             background: rgba(255,255,255,0.4); /* white overlay, adjust opacity as needed */
             z-index: 1;
         }
-        .section {
-            position: relative;
-            z-index: 0;
-        }
-        .input-group, .input-label, .input-controls {
-            position: relative;
-            z-index: 2;
-        }
+        @media (max-width: 900px) {
+    .input-group {
+        padding: 0;
+    }
+}
+.doubler-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    margin: 0;
+    padding: 0;
+}
+.doubler-section {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    min-height: 50px;
+    height: 80px;
+    box-sizing: border-box;
+    background-color: #435b4a;
+    color: white;
+    font-size: 1.2em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.doubler-section .input-group {
+    flex: 1;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    flex-direction: row;
+    gap: 12px;
+}
+.doubler-section .input-label {
+    font-size: 1.5em;
+    color: #e3e3e3;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    margin-right: 16px;
+    text-align: center;
+    min-width: 90px;
+    flex-shrink: 0;
+}
+.doubler-section .input-controls {
+    width: auto;
+    height: 100%;
+    opacity: 1;
+    flex: 1;
+}
+@media (max-width: 900px) {
+    .doubler-section {
+        min-height: 40px;
+        height: 80px;
+        font-size: 1em;
+    }
+    .doubler-section .input-label {
+        min-width: 70px;
+        margin-right: 8px;
+        width: 36%;
+    }
+    .doubler-section .input-group {
+        gap: 6px;
+    }
+}
+.title-section {
+    width: 100vw;
+    height: 56px;
+    min-height: 56px;
+    max-height: 56px;
+    background: #435b4a;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    
+}
+.title-section .back-arrow {
+    position: relative;
+    top: 0;
+    left: 0;
+    font-size: 2.2em;
+    color: #fff;
+    text-decoration: none;
+    background: transparent;
+    border-bottom-right-radius: 12px;
+    padding: 8px 18px 8px 12px;
+    z-index: 100;
+    box-shadow: none;
+    transition: background 0.2s;
+}
+.title-section .back-arrow:hover {
+    background: #e3e3e3;
+    color: #0d47a1;
+}
+.title-text {
+    color: #fff;
+    font-size: 1.6em;
+    font-weight: bold;
+    margin-left: 12px;
+    letter-spacing: 1px;
+}
+@media (max-width: 600px) {
+    .title-section {
+        height: 48px;
+        min-height: 48px;
+        max-height: 48px;
+    }
+   
+}
