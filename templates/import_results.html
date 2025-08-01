@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Import Results</title>
+    <title>Portals Lookup Results</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/static/css/scuteswarm.css">
     <link rel="stylesheet" href="/static/css/tiles.css">
+    <link rel="stylesheet" href="/static/css/import.css">
 </head>
-<body style="background-color: #525252; margin: 10px;">
-    <div class="container" style="height:auto; min-height:0;">
-        <div class="section" style="background:none; align-items:flex-start; justify-content:flex-start; min-height:0;">
+<body>
+    <div class="container">
+        <div class="section">
             <div class="input-group">
-                <div class="input-label">Import Results</div>
+                <div class="title">Results</div>
                 {% for store, results in results_by_store.items() %}
-                <div style="margin-bottom:30px;">
-                    <h2 style="color:#2196F3;">{{ store }}</h2>
-                    <div style="width:100vw; max-width:100vw; overflow-x:auto;">
-                        <table style="width:100%; background:white; border-radius:8px; overflow:hidden;">
-                            <thead style="background:#2196F3; color:white;">
+                <div class="store-results">
+                    <h2 class="storename">{{ store }}</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <th style="width:30%;">Name</th>
-                                    <th style="width:30%;">URL</th>
-                                    <th style="width:20%;">In Stock</th>
-                                    <th style="width:20%;">Price</th>
+                                    <th>Name</th>
+                                    <th>URL</th>
+                                    <th>In Stock</th>
+                                    <th>Price</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -37,7 +37,7 @@
                         </table>
                     </div>
                     {% if not results %}
-                        <div style="color:#888; margin-top:10px;">No results for this store.</div>
+                        <div class="no-results">No results for this store.</div>
                     {% endif %}
                 </div>
                 {% endfor %}
