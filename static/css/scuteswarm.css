@@ -92,8 +92,8 @@ body {
         }
         .input-controls input[type="number"] {
             width: 50%;
-            height: 100%;
-            font-size: 2em;
+            height: 90%;
+            font-size: 1.5em;
             text-align: center;
             appearance: textfield;
             -moz-appearance: textfield;
