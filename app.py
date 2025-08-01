@@ -46,30 +46,36 @@ def lookup_card_at_store(card_name, store):
     headers = HEADERS.copy()
     headers["origin"] = store["baseUrl"]
     headers["referer"] = f'{store["baseUrl"]}/search/products?productName={card_name}&productLineName=Magic:+The+Gathering'
-    payload = {
-        "context": {"productLineName": "Magic: The Gathering"},
-        "filters": {"productName": [card_name]},
-        "from": 0,
-        "size": 24,
-        "sort": [{"field": "in-stock-price-sort", "order": "desc"}]
-    }
-    try:
-        resp = requests.post(store["api"], headers=headers, json=payload, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        products = data.get("products", {}).get("items", [])
-        results = []
-        for item in products:
-            results.append({
-                "name": item.get("name"),
-                "url": f'{store["baseUrl"]}/catalog/magic/{item.get("setUrlName")}/{item.get("productUrlName")}/{item.get("id")}',
-                "inStock": item.get("quantity") or item.get("availableQuantity"),
-                "price": item.get("lowestPrice"),
-                "store": store["storeName"]
-            })
-        return results
-    except Exception:
-        return []
+    def fetch_results(name):
+        payload = {
+            "context": {"productLineName": "Magic: The Gathering"},
+            "filters": {"productName": [name]},
+            "from": 0,
+            "size": 24,
+            "sort": [{"field": "in-stock-price-sort", "order": "desc"}]
+        }
+        try:
+            resp = requests.post(store["api"], headers=headers, json=payload, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            products = data.get("products", {}).get("items", [])
+            results = []
+            for item in products:
+                results.append({
+                    "name": item.get("name"),
+                    "url": f'{store["baseUrl"]}/catalog/magic/{item.get("setUrlName")}/{item.get("productUrlName")}/{item.get("id")}',
+                    "inStock": item.get("quantity") or item.get("availableQuantity"),
+                    "price": item.get("lowestPrice"),
+                    "store": store["storeName"]
+                })
+            return results
+        except Exception:
+            return []
+    # Try base, Extended Art, Borderless
+    all_results = []
+    for variant in [card_name, f"{card_name} (Extended Art)", f"{card_name} (Borderless)", f"{card_name} (Showcase)", f"{card_name} (Full Art)"]:
+        all_results.extend(fetch_results(variant))
+    return all_results
     
 @app.route('/lookup', methods=['POST'])
 def lookup():
