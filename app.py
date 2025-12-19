@@ -65,6 +65,7 @@ def lookup_card_at_store(card_name, store):
                     "name": item.get("name"),
                     "url": f'{store["baseUrl"]}/catalog/magic/{item.get("setUrlName")}/{item.get("productUrlName")}/{item.get("id")}',
                     "inStock": item.get("quantity") or item.get("availableQuantity"),
+                    "set": item.get("setName"),
                     "price": item.get("lowestPrice"),
                     "store": store["storeName"]
                 })

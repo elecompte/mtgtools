@@ -21,6 +21,7 @@
                             <thead>
                                 <tr>
                                     <th>Name</th>
+                                    <th>Set</th>
                                     <th>Price</th>
                                 </tr>
                             </thead>
@@ -28,6 +29,7 @@
                             {% for card in results %}
                                 <tr>
                                     <td><a href="{{ card.url }}" target="_blank">{{ card.name }}</a></td>
+                                    <td>{% if card.set is not none %}{{ card.set }}{% else %}-{% endif %}</td>
                                     <td>{% if card.price is not none %}${{ '%.2f'|format(card.price|float) }}{% else %}-{% endif %}</td>
                                 </tr>
                             {% endfor %}
