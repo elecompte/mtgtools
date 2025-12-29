@@ -42,6 +42,20 @@ HEADERS = {
     "Cookie": "optimizelyId=2b184282-e6c6-41c0-85ef-3be5941512a1; tracking-preferences={%22version%22:1%2C%22destinations%22:{%22Actions%20Amplitude%22:true}%2C%22custom%22:{%22advertising%22:true%2C%22functional%22:true%2C%22marketingAndAnalytics%22:true}}; .AspNetCore.Session=CfDJ8ALidwpDTQpJquazmcIKysAsQ%2Fhxc%2Ff%2BB21qpn7uA%2FLHmlzWinwg7rjR31nQVQjA7y2Bd%2B6bM4hJrBpI0ypWv0X1PTIsX3dQ2aeDka28i7WxaChEtde9H5yRpJcRo8Ydp74nRU7u65GQKAB09EGnfPOcwft4VI4R6Sc9q1elnJYd"
 }
 
+def resolve_card_name(card_name: str):
+    """Use Scryfall fuzzy search to find the best match for a card name."""
+    try:
+        r = requests.get(
+            "https://api.scryfall.com/cards/named",
+            params={"fuzzy": card_name},
+            timeout=8,
+        )
+        if r.status_code == 200:
+            return r.json().get("name")
+    except Exception:
+        pass
+    return None
+
 def lookup_card_at_store(card_name, store):
     headers = HEADERS.copy()
     headers["origin"] = store["baseUrl"]
@@ -84,11 +98,21 @@ def lookup():
     card_name = data.get("cardName")
     if not card_name:
         return jsonify({"error": "Missing cardName in request body"}), 400
-    for store in STORES:
-        results = lookup_card_at_store(card_name, store)
-        if results:
-            return jsonify(results)
-    return jsonify([])
+
+    def search_all(name):
+        for store in STORES:
+            results = lookup_card_at_store(name, store)
+            if results:
+                return results
+        return []
+
+    results = search_all(card_name)
+    if not results:
+        corrected = resolve_card_name(card_name)
+        if corrected and corrected.lower() != card_name.lower():
+            results = search_all(corrected)
+
+    return jsonify(results)
 
 @app.route('/import', methods=['GET', 'POST'])
 def import_cards():
@@ -111,8 +135,14 @@ def import_cards():
     results_by_store = {store['storeName']: [] for store in STORES}
     all_results = []
     for name in limited_names:
+        corrected = None
         for store in STORES:
             store_results = lookup_card_at_store(name, store)
+            if not store_results:
+                if corrected is None:
+                    corrected = resolve_card_name(name)
+                if corrected and corrected.lower() != name.lower():
+                    store_results = lookup_card_at_store(corrected, store)
             if store_results:
                 results_by_store[store['storeName']].extend(store_results)
                 all_results.extend(store_results)
