@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#1976d2">
-    <link rel="icon" href="/static/img/scuteswarm.png">
+    <link rel="icon" href="/static/img/mtg.ico">
+    <link rel="apple-touch-icon" href="/static/img/mtg.ico">
     <link rel="stylesheet" href="/static/css/tiles.css">
     <link rel="stylesheet" href="/static/css/subpage.css">
     <link rel="stylesheet" href="/static/css/mana.css">
@@ -19,6 +20,8 @@
         <input type="checkbox" class="mana-toggle toggle-red" data-color="red" aria-label="Show red mana" checked>
         <input type="checkbox" class="mana-toggle toggle-green" data-color="green" aria-label="Show green mana" checked>
         <input type="checkbox" class="mana-toggle toggle-colorless" data-color="colorless" aria-label="Show colorless mana" checked>
+        <button type="button" class="mana-square-btn" id="mana-add-all" aria-label="Add one mana of each color">+</button>
+        <button type="button" class="mana-square-btn" id="mana-reset" aria-label="Reset all mana to zero">&#x21bb;</button>
     </div>
     <div class="tiles-container mana-grid">
         <div class="tile mana-tile white-mana" data-color="white">
@@ -91,13 +94,45 @@
             }
         };
 
+        const getToggle = (color) => document.querySelector(`.mana-toggle[data-color="${color}"]`);
+
         document.querySelectorAll('.mana-toggle').forEach((toggle) => {
             toggle.addEventListener('change', () => {
-                toggleTile(toggle.dataset.color, toggle.checked);
+                const color = toggle.dataset.color;
+                toggleTile(color, toggle.checked);
+                if (!toggle.checked) {
+                    manaTotals[color] = 0;
+                    updateValue(color);
+                }
             });
             // initialize state
             toggleTile(toggle.dataset.color, toggle.checked);
         });
+
+        const resetButton = document.getElementById('mana-reset');
+        if (resetButton) {
+            resetButton.addEventListener('click', () => {
+                Object.keys(manaTotals).forEach((color) => {
+                    manaTotals[color] = 0;
+                    updateValue(color);
+                });
+            });
+        }
+
+        const addAllButton = document.getElementById('mana-add-all');
+        if (addAllButton) {
+            addAllButton.addEventListener('click', () => {
+                ['white', 'blue', 'black', 'red', 'green'].forEach((color) => {
+                    manaTotals[color] += 1;
+                    updateValue(color);
+                    const toggle = getToggle(color);
+                    if (toggle && !toggle.checked) {
+                        toggle.checked = true;
+                        toggleTile(color, true);
+                    }
+                });
+            });
+        }
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
