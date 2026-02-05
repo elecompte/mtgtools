@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Devilish Valet Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#1976d2">
+    <link rel="icon" href="/static/img/scuteswarm.png">
+    <link rel="stylesheet" href="/static/css/valet.css">
+    <link rel="stylesheet" href="/static/css/subpage.css">
+</head>
+<body>
+    <a href="/" class="back-arrow" aria-label="Back to main page">&#8592;</a>
+    <div class="valet-container">
+        <div class="valet-card">
+            <div class="valet-header">
+                <span class="valet-title">Devilish Valet Power</span>
+                <span class="valet-subtitle">Doubles on each creature ETB</span>
+            </div>
+            <div class="valet-display" id="valet-power">1</div>
+            <div class="valet-controls">
+                <button type="button" class="valet-btn minus" aria-label="Remove creature ETB" id="etb-minus">-</button>
+                <div class="etb-meta">
+                    <span class="etb-label">Creature ETBs</span>
+                    <span class="etb-count" id="etb-count">0</span>
+                </div>
+                <button type="button" class="valet-btn plus" aria-label="Add creature ETB" id="etb-plus">+</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const state = {
+            power: 1,
+            etbs: 0,
+        };
+
+        const powerEl = document.getElementById('valet-power');
+        const etbCountEl = document.getElementById('etb-count');
+
+        const updateDisplay = () => {
+            powerEl.textContent = state.power.toLocaleString();
+            etbCountEl.textContent = state.etbs;
+        };
+
+        document.getElementById('etb-plus').addEventListener('click', () => {
+            state.etbs += 1;
+            state.power = state.power * 2;
+            updateDisplay();
+        });
+
+        document.getElementById('etb-minus').addEventListener('click', () => {
+            if (state.etbs <= 0) return;
+            state.etbs -= 1;
+            state.power = Math.max(1, Math.floor(state.power / 2));
+            updateDisplay();
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/js/service-worker.js');
+            });
+        }
+    </script>
+</body>
+</html>

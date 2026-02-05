@@ -158,6 +158,10 @@ def index():
 def mana():
     return render_template('mana.html')
 
+@app.route('/valet')
+def valet():
+    return render_template('valet.html')
+
 @app.route('/scuteswarm', methods=['GET', 'POST'])
 def scuteswarm():
     final_swarms = 0
