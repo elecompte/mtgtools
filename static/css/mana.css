@@ -1,0 +1,117 @@
+body {
+    margin: 0;
+    background-color: #525252;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.mana-grid {
+    max-width: 1200px;
+    margin: 48px auto;
+    gap: 18px;
+}
+
+.mana-tile {
+    position: relative;
+    display: grid;
+    grid-template-columns: 80px 1fr 80px;
+    align-items: center;
+    height: 120px;
+    border-radius: 14px;
+    overflow: hidden;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.mana-label {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    font-size: 0.9em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.mana-value {
+    font-size: 3em;
+    font-weight: 700;
+    text-align: center;
+    width: 100%;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.mana-control {
+    height: 100%;
+    width: 100%;
+    border: none;
+    color: #fff;
+    font-size: 2em;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.mana-control:active {
+    transform: scale(0.98);
+}
+
+.mana-control:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.white-mana {
+    background: linear-gradient(135deg, #f6f6f6, #dadada);
+    color: #262626;
+}
+.white-mana .mana-control {
+    color: #262626;
+    background: rgba(0, 0, 0, 0.08);
+}
+.white-mana .mana-control:hover {
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.blue-mana {
+    background: linear-gradient(135deg, #0d3b8a, #2e8ad5);
+}
+.blue-mana .mana-control {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.black-mana {
+    background: linear-gradient(135deg, #0c0c0c, #2c2c2c);
+}
+.black-mana .mana-control {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.red-mana {
+    background: linear-gradient(135deg, #7c1515, #c64c32);
+}
+.red-mana .mana-control {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.green-mana {
+    background: linear-gradient(135deg, #1e5b2a, #3e8b50);
+}
+.green-mana .mana-control {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 700px) {
+    .mana-grid {
+        margin: 36px auto;
+        gap: 14px;
+    }
+    .mana-tile {
+        grid-template-columns: 64px 1fr 64px;
+        height: 100px;
+    }
+    .mana-value {
+        font-size: 2.5em;
+    }
+}

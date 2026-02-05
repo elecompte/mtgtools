@@ -154,6 +154,10 @@ def import_cards():
 def index():
     return render_template('index.html')
 
+@app.route('/mana')
+def mana():
+    return render_template('mana.html')
+
 @app.route('/scuteswarm', methods=['GET', 'POST'])
 def scuteswarm():
     final_swarms = 0
