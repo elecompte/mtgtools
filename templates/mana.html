@@ -12,36 +12,50 @@
 </head>
 <body>
     <a href="/" class="back-arrow" aria-label="Back to main page">&#8592;</a>
+    <div class="mana-filter-bar">
+        <input type="checkbox" class="mana-toggle toggle-white" data-color="white" aria-label="Show white mana" checked>
+        <input type="checkbox" class="mana-toggle toggle-blue" data-color="blue" aria-label="Show blue mana" checked>
+        <input type="checkbox" class="mana-toggle toggle-black" data-color="black" aria-label="Show black mana" checked>
+        <input type="checkbox" class="mana-toggle toggle-red" data-color="red" aria-label="Show red mana" checked>
+        <input type="checkbox" class="mana-toggle toggle-green" data-color="green" aria-label="Show green mana" checked>
+        <input type="checkbox" class="mana-toggle toggle-colorless" data-color="colorless" aria-label="Show colorless mana" checked>
+    </div>
     <div class="tiles-container mana-grid">
-        <div class="tile mana-tile white-mana">
-            <button class="mana-control plus" data-color="white" aria-label="Add white mana">+</button>
-            <div class="mana-value" id="value-white">0</div>
+        <div class="tile mana-tile white-mana" data-color="white">
             <button class="mana-control minus" data-color="white" aria-label="Spend white mana">-</button>
+            <div class="mana-value" id="value-white">0</div>
+            <button class="mana-control plus" data-color="white" aria-label="Add white mana">+</button>
             <span class="mana-label">White</span>
         </div>
-        <div class="tile mana-tile blue-mana">
-            <button class="mana-control plus" data-color="blue" aria-label="Add blue mana">+</button>
-            <div class="mana-value" id="value-blue">0</div>
+        <div class="tile mana-tile blue-mana" data-color="blue">
             <button class="mana-control minus" data-color="blue" aria-label="Spend blue mana">-</button>
+            <div class="mana-value" id="value-blue">0</div>
+            <button class="mana-control plus" data-color="blue" aria-label="Add blue mana">+</button>
             <span class="mana-label">Blue</span>
         </div>
-        <div class="tile mana-tile black-mana">
-            <button class="mana-control plus" data-color="black" aria-label="Add black mana">+</button>
-            <div class="mana-value" id="value-black">0</div>
+        <div class="tile mana-tile black-mana" data-color="black">
             <button class="mana-control minus" data-color="black" aria-label="Spend black mana">-</button>
+            <div class="mana-value" id="value-black">0</div>
+            <button class="mana-control plus" data-color="black" aria-label="Add black mana">+</button>
             <span class="mana-label">Black</span>
         </div>
-        <div class="tile mana-tile red-mana">
-            <button class="mana-control plus" data-color="red" aria-label="Add red mana">+</button>
-            <div class="mana-value" id="value-red">0</div>
+        <div class="tile mana-tile red-mana" data-color="red">
             <button class="mana-control minus" data-color="red" aria-label="Spend red mana">-</button>
+            <div class="mana-value" id="value-red">0</div>
+            <button class="mana-control plus" data-color="red" aria-label="Add red mana">+</button>
             <span class="mana-label">Red</span>
         </div>
-        <div class="tile mana-tile green-mana">
-            <button class="mana-control plus" data-color="green" aria-label="Add green mana">+</button>
-            <div class="mana-value" id="value-green">0</div>
+        <div class="tile mana-tile green-mana" data-color="green">
             <button class="mana-control minus" data-color="green" aria-label="Spend green mana">-</button>
+            <div class="mana-value" id="value-green">0</div>
+            <button class="mana-control plus" data-color="green" aria-label="Add green mana">+</button>
             <span class="mana-label">Green</span>
+        </div>
+        <div class="tile mana-tile colorless-mana" data-color="colorless">
+            <button class="mana-control minus" data-color="colorless" aria-label="Spend colorless mana">-</button>
+            <div class="mana-value" id="value-colorless">0</div>
+            <button class="mana-control plus" data-color="colorless" aria-label="Add colorless mana">+</button>
+            <span class="mana-label">Colorless</span>
         </div>
     </div>
     <script>
@@ -51,6 +65,7 @@
             black: 0,
             red: 0,
             green: 0,
+            colorless: 0,
         };
 
         const updateValue = (color) => {
@@ -67,6 +82,21 @@
                 manaTotals[color] = Math.max(0, manaTotals[color] + delta);
                 updateValue(color);
             });
+        });
+
+        const toggleTile = (color, isVisible) => {
+            const tile = document.querySelector(`.mana-tile[data-color="${color}"]`);
+            if (tile) {
+                tile.classList.toggle('is-hidden', !isVisible);
+            }
+        };
+
+        document.querySelectorAll('.mana-toggle').forEach((toggle) => {
+            toggle.addEventListener('change', () => {
+                toggleTile(toggle.dataset.color, toggle.checked);
+            });
+            // initialize state
+            toggleTile(toggle.dataset.color, toggle.checked);
         });
 
         if ('serviceWorker' in navigator) {
