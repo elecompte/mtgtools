@@ -1,0 +1,141 @@
+body {
+    margin: 0;
+    background: #4a4a4a;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+
+.krenko-container {
+    max-width: 900px;
+    margin: 48px auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.krenko-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(36, 17, 6, 0.92), rgba(92, 34, 14, 0.86)), radial-gradient(circle at 20% 20%, rgba(255,255,255,0.05), transparent 40%), url('/static/img/krenko.jpg');
+    background-size: cover;
+    background-position: center;
+    border-radius: 16px;
+    padding: 32px 24px 28px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.krenko-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08), transparent 45%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.krenko-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 1;
+    position: relative;
+}
+
+.krenko-title {
+    font-size: 1.4em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.krenko-subtitle {
+    font-size: 0.95em;
+    color: #f2d6c9;
+    opacity: 0.9;
+}
+
+.krenko-display {
+    margin: 28px 0 18px;
+    font-size: clamp(56px, 14vw, 110px);
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: 0.02em;
+    text-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    position: relative;
+}
+
+.krenko-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    z-index: 1;
+    position: relative;
+}
+
+.krenko-control {
+    display: grid;
+    grid-template-columns: 120px 1fr 120px;
+    align-items: center;
+    gap: 16px;
+}
+
+.krenko-btn {
+    height: 72px;
+    border: none;
+    border-radius: 12px;
+    font-size: 2.2em;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+.krenko-btn.plus {
+    background: linear-gradient(135deg, #d35400, #e67e22);
+}
+.krenko-btn.minus {
+    background: linear-gradient(135deg, #3c3c3c, #1f1f1f);
+}
+.krenko-btn:hover {
+    filter: brightness(1.05);
+}
+.krenko-btn:active {
+    transform: scale(0.97);
+}
+
+.krenko-meta {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.krenko-label {
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+}
+
+.krenko-count {
+    font-size: 1.6em;
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .krenko-container {
+        margin: 32px auto;
+    }
+    .krenko-card {
+        padding: 24px 18px;
+    }
+    .krenko-control {
+        grid-template-columns: 90px 1fr 90px;
+        gap: 12px;
+    }
+    .krenko-btn {
+        height: 60px;
+        font-size: 1.9em;
+    }
+}

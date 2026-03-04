@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Krenko Token Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#1976d2">
+    <link rel="icon" href="/static/img/mtg.ico">
+    <link rel="apple-touch-icon" href="/static/img/mtg.png">
+    <link rel="stylesheet" href="/static/css/krenko.css">
+    <link rel="stylesheet" href="/static/css/subpage.css">
+</head>
+<body>
+    <a href="/" class="back-arrow" aria-label="Back to main page">&#8592;</a>
+    <div class="krenko-container">
+        <div class="krenko-card">
+            <div class="krenko-header">
+                <span class="krenko-title">Krenko Mob Boss Tokens</span>
+                <span class="krenko-subtitle">Tokens = (G + K) × (2^K − 1)</span>
+            </div>
+            <div class="krenko-display" id="token-total">0</div>
+            <div class="krenko-controls">
+                <div class="krenko-control">
+                    <button type="button" class="krenko-btn minus" aria-label="Remove non-Krenko goblin" data-target="goblins">-</button>
+                    <div class="krenko-meta">
+                        <span class="krenko-label">Other Goblins (G)</span>
+                        <span class="krenko-count" id="goblins-count">0</span>
+                    </div>
+                    <button type="button" class="krenko-btn plus" aria-label="Add non-Krenko goblin" data-target="goblins">+</button>
+                </div>
+                <div class="krenko-control">
+                    <button type="button" class="krenko-btn minus" aria-label="Remove Krenko" data-target="krenkos">-</button>
+                    <div class="krenko-meta">
+                        <span class="krenko-label">Krenkos (K)</span>
+                        <span class="krenko-count" id="krenkos-count">0</span>
+                    </div>
+                    <button type="button" class="krenko-btn plus" aria-label="Add Krenko" data-target="krenkos">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const state = {
+            goblins: 0,
+            krenkos: 0,
+        };
+
+        const tokenTotalEl = document.getElementById('token-total');
+        const goblinsCountEl = document.getElementById('goblins-count');
+        const krenkosCountEl = document.getElementById('krenkos-count');
+
+        const calcTokens = () => {
+            const totalGoblins = state.goblins + state.krenkos;
+            const multiplier = Math.pow(2, state.krenkos) - 1;
+            return totalGoblins * multiplier;
+        };
+
+        const updateDisplay = () => {
+            tokenTotalEl.textContent = calcTokens().toLocaleString();
+            goblinsCountEl.textContent = state.goblins;
+            krenkosCountEl.textContent = state.krenkos;
+        };
+
+        document.querySelectorAll('.krenko-btn').forEach((button) => {
+            button.addEventListener('click', () => {
+                const key = button.dataset.target;
+                if (!key) return;
+                if (button.classList.contains('plus')) {
+                    state[key] += 1;
+                } else {
+                    state[key] = Math.max(0, state[key] - 1);
+                }
+                updateDisplay();
+            });
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/js/service-worker.js');
+            });
+        }
+    </script>
+</body>
+</html>

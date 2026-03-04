@@ -162,6 +162,10 @@ def mana():
 def valet():
     return render_template('valet.html')
 
+@app.route('/krenko')
+def krenko():
+    return render_template('krenko.html')
+
 @app.route('/scuteswarm', methods=['GET', 'POST'])
 def scuteswarm():
     final_swarms = 0
