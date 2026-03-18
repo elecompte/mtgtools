@@ -18,7 +18,11 @@
                 <span class="valet-title">Devilish Valet Power</span>
                 <span class="valet-subtitle">Doubles on each creature ETB</span>
             </div>
-            <div class="valet-display" id="valet-power">1</div>
+            <div class="valet-power-controls">
+                <button type="button" class="valet-power-btn" aria-label="Decrease power" id="power-minus">-</button>
+                <div class="valet-display" id="valet-power">1</div>
+                <button type="button" class="valet-power-btn" aria-label="Increase power" id="power-plus">+</button>
+            </div>
             <div class="valet-controls">
                 <button type="button" class="valet-btn minus" aria-label="Remove creature ETB" id="etb-minus">-</button>
                 <div class="etb-meta">
@@ -53,6 +57,16 @@
             if (state.etbs <= 0) return;
             state.etbs -= 1;
             state.power = Math.max(1, Math.floor(state.power / 2));
+            updateDisplay();
+        });
+
+        document.getElementById('power-plus').addEventListener('click', () => {
+            state.power += 1;
+            updateDisplay();
+        });
+
+        document.getElementById('power-minus').addEventListener('click', () => {
+            state.power = Math.max(1, state.power - 1);
             updateDisplay();
         });
 
