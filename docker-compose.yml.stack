@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  scuteswarm:
+    image: mtgtools:latest
+    ports:
+      - target: 5002
+        published: 5003
+        protocol: tcp
+        mode: ingress
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.hostclass == primary
+      restart_policy:
+        condition: any

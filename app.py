@@ -1,6 +1,9 @@
 import os
 import csv
 import tempfile
+import threading
+import uuid
+import re
 from flask import Flask, render_template, request, redirect, url_for, request, jsonify, send_file
 from flask_cors import CORS
 import requests
@@ -41,6 +44,9 @@ HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0",
     "Cookie": "optimizelyId=2b184282-e6c6-41c0-85ef-3be5941512a1; tracking-preferences={%22version%22:1%2C%22destinations%22:{%22Actions%20Amplitude%22:true}%2C%22custom%22:{%22advertising%22:true%2C%22functional%22:true%2C%22marketingAndAnalytics%22:true}}; .AspNetCore.Session=CfDJ8ALidwpDTQpJquazmcIKysAsQ%2Fhxc%2Ff%2BB21qpn7uA%2FLHmlzWinwg7rjR31nQVQjA7y2Bd%2B6bM4hJrBpI0ypWv0X1PTIsX3dQ2aeDka28i7WxaChEtde9H5yRpJcRo8Ydp74nRU7u65GQKAB09EGnfPOcwft4VI4R6Sc9q1elnJYd"
 }
+
+JOB_LOCK = threading.Lock()
+IMPORT_JOBS = {}
 
 def resolve_card_name(card_name: str):
     """Use Scryfall fuzzy search to find the best match for a card name."""
@@ -91,6 +97,91 @@ def lookup_card_at_store(card_name, store):
     for variant in [card_name, f"{card_name} (Extended Art)", f"{card_name} (Borderless)", f"{card_name} (Showcase)", f"{card_name} (Full Art)"]:
         all_results.extend(fetch_results(variant))
     return all_results
+
+def normalize_set_name(value):
+    if not value:
+        return ""
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
+def set_name_matches(store_set, target_set):
+    if not target_set:
+        return True
+    if not store_set:
+        return False
+    store_norm = normalize_set_name(store_set)
+    target_norm = normalize_set_name(target_set)
+    return store_norm in target_norm or target_norm in store_norm
+
+def normalize_card_entries(card_entries):
+    cleaned = []
+    for entry in card_entries:
+        if isinstance(entry, dict):
+            name = str(entry.get("name") or "").strip()
+            set_name = entry.get("set")
+            exact = bool(entry.get("exact"))
+        else:
+            name = str(entry or "").strip()
+            set_name = None
+            exact = False
+        if not name:
+            continue
+        parts = name.split(' ', 1)
+        if parts[0].isdigit() and len(parts) > 1:
+            name = parts[1].strip()
+        cleaned.append({"name": name, "set": set_name, "exact": exact})
+    return cleaned
+
+def run_import_job(job_id, limited_entries):
+    results_by_store = {store['storeName']: [] for store in STORES}
+    all_results = []
+    current = 0
+    for entry in limited_entries:
+        name = entry["name"]
+        set_name = entry.get("set")
+        exact = entry.get("exact", False)
+        corrected = None
+        for store in STORES:
+            store_results = lookup_card_at_store(name, store)
+            if not store_results:
+                if corrected is None and not exact:
+                    corrected = resolve_card_name(name)
+                if corrected and corrected.lower() != name.lower():
+                    store_results = lookup_card_at_store(corrected, store)
+            if store_results and set_name:
+                store_results = [
+                    result for result in store_results
+                    if set_name_matches(result.get("set"), set_name)
+                ]
+            if store_results:
+                results_by_store[store['storeName']].extend(store_results)
+                all_results.extend(store_results)
+                break
+        current += 1
+        with JOB_LOCK:
+            job = IMPORT_JOBS.get(job_id)
+            if job:
+                job["current"] = current
+    with JOB_LOCK:
+        job = IMPORT_JOBS.get(job_id)
+        if job:
+            job["status"] = "done"
+            job["results_by_store"] = results_by_store
+            job["all_results"] = all_results
+            job["card_names"] = [entry["name"] for entry in limited_entries]
+
+def create_import_job(card_entries):
+    cleaned = normalize_card_entries(card_entries)
+    limited_entries = cleaned[:50]
+    job_id = uuid.uuid4().hex
+    with JOB_LOCK:
+        IMPORT_JOBS[job_id] = {
+            "status": "running",
+            "current": 0,
+            "total": len(limited_entries),
+        }
+    thread = threading.Thread(target=run_import_job, args=(job_id, limited_entries), daemon=True)
+    thread.start()
+    return job_id, len(limited_entries)
     
 @app.route('/lookup', methods=['POST'])
 def lookup():
@@ -114,6 +205,72 @@ def lookup():
 
     return jsonify(results)
 
+@app.route('/scryfall_search', methods=['POST'])
+def scryfall_search():
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    if not query:
+        return jsonify({"error": "Missing query in request body"}), 400
+    try:
+        resp = requests.get(
+            "https://api.scryfall.com/cards/search",
+            params={"q": query, "unique": "cards", "order": "name"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except requests.RequestException:
+        return jsonify({"error": "Scryfall request failed"}), 502
+
+    payload = resp.json()
+    results = []
+    for card in payload.get("data", []):
+        results.append({
+            "name": card.get("name"),
+            "set": card.get("set_name"),
+            "collector": card.get("collector_number"),
+            "uri": card.get("scryfall_uri"),
+        })
+    return jsonify({"results": results, "has_more": payload.get("has_more", False)})
+
+@app.route('/import_job', methods=['POST'])
+def import_job():
+    data = request.get_json(silent=True) or {}
+    card_entries = data.get("cardNames") or []
+    if not isinstance(card_entries, list) or not card_entries:
+        return jsonify({"error": "Missing cardNames"}), 400
+    job_id, total = create_import_job(card_entries)
+    return jsonify({"job_id": job_id, "total": total})
+
+@app.route('/import_job/<job_id>/progress', methods=['GET'])
+def import_job_progress(job_id):
+    with JOB_LOCK:
+        job = IMPORT_JOBS.get(job_id)
+        if not job:
+            return jsonify({"error": "Job not found"}), 404
+        return jsonify({
+            "status": job["status"],
+            "current": job["current"],
+            "total": job["total"],
+        })
+
+@app.route('/import_job/<job_id>/results', methods=['GET'])
+def import_job_results(job_id):
+    with JOB_LOCK:
+        job = IMPORT_JOBS.get(job_id)
+        if not job:
+            return jsonify({"error": "Job not found"}), 404
+        if job["status"] != "done":
+            return jsonify({"error": "Job not complete"}), 400
+        results_by_store = job.get("results_by_store", {})
+        all_results = job.get("all_results", [])
+        card_names = job.get("card_names", [])
+    return render_template(
+        'import_results.html',
+        results_by_store=results_by_store,
+        all_results=all_results,
+        card_names=card_names,
+    )
+
 @app.route('/import', methods=['GET', 'POST'])
 def import_cards():
     if request.method == 'GET':
@@ -130,8 +287,7 @@ def import_cards():
         card_names = [line.strip() for line in content.splitlines() if line.strip()]
     else:
         return render_template('import.html', error="No file uploaded")
-    clean_names = [line.split(' ', 1)[1] if line.split(' ', 1)[0].isdigit() else line for line in card_names]
-    limited_names = clean_names[:50]
+    limited_names = [entry["name"] for entry in normalize_card_entries(card_names)][:50]
     results_by_store = {store['storeName']: [] for store in STORES}
     all_results = []
     for name in limited_names:
@@ -165,6 +321,10 @@ def valet():
 @app.route('/krenko')
 def krenko():
     return render_template('krenko.html')
+
+@app.route('/animpakal')
+def animpakal():
+    return render_template('animpakal.html')
 
 @app.route('/scuteswarm', methods=['GET', 'POST'])
 def scuteswarm():

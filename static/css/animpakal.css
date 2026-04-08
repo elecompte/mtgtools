@@ -1,0 +1,174 @@
+body {
+    margin: 0;
+    background: #3b3330;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    color: #fff;
+}
+
+.animpakal-container {
+    max-width: 900px;
+    margin: 48px auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.animpakal-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(73, 40, 18, 0.92), rgba(118, 64, 26, 0.85)),
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), transparent 45%);
+    border-radius: 16px;
+    padding: 32px 24px 28px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.animpakal-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08), transparent 45%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.animpakal-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 1;
+    position: relative;
+}
+
+.animpakal-title {
+    font-size: 1.4em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.animpakal-subtitle {
+    font-size: 0.95em;
+    color: #f8e0c9;
+    opacity: 0.9;
+}
+
+.animpakal-display {
+    margin: 26px 0 12px;
+    font-size: clamp(54px, 14vw, 110px);
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: 0.02em;
+    text-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    position: relative;
+}
+
+.animpakal-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+    z-index: 1;
+    position: relative;
+}
+
+.summary-item {
+    background: rgba(20, 12, 8, 0.35);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.summary-label {
+    display: block;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    opacity: 0.75;
+    margin-bottom: 4px;
+}
+
+.summary-value {
+    font-size: 1.5em;
+    font-weight: 700;
+}
+
+.animpakal-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    z-index: 1;
+    position: relative;
+}
+
+.animpakal-control {
+    display: grid;
+    grid-template-columns: 110px 1fr 110px;
+    align-items: center;
+    gap: 16px;
+}
+
+.animpakal-btn {
+    height: 70px;
+    border: none;
+    border-radius: 12px;
+    font-size: 2.1em;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.animpakal-btn.plus {
+    background: linear-gradient(135deg, #d07c2a, #e6a04a);
+}
+
+.animpakal-btn.minus {
+    background: linear-gradient(135deg, #3a342f, #1c1917);
+}
+
+.animpakal-btn:hover {
+    filter: brightness(1.05);
+}
+
+.animpakal-btn:active {
+    transform: scale(0.97);
+}
+
+.animpakal-meta {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.animpakal-label {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+}
+
+.animpakal-count {
+    font-size: 1.6em;
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .animpakal-container {
+        margin: 32px auto;
+    }
+    .animpakal-card {
+        padding: 24px 18px;
+    }
+    .animpakal-control {
+        grid-template-columns: 90px 1fr 90px;
+        gap: 12px;
+    }
+    .animpakal-btn {
+        height: 60px;
+        font-size: 1.9em;
+    }
+}

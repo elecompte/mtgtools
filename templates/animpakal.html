@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Anim Pakal Activations</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#1976d2">
+    <link rel="icon" href="/static/img/mtg.ico">
+    <link rel="apple-touch-icon" href="/static/img/mtg.png">
+    <link rel="stylesheet" href="/static/css/animpakal.css">
+    <link rel="stylesheet" href="/static/css/subpage.css">
+</head>
+<body>
+    <a href="/" class="back-arrow" aria-label="Back to main page">&#8592;</a>
+    <div class="animpakal-container">
+        <div class="animpakal-card">
+            <div class="animpakal-header">
+                <span class="animpakal-title">Anim Pakal Gnome Output</span>
+                <span class="animpakal-subtitle">Total gnomes = sum(S + 1 ... S + A)</span>
+            </div>
+            <div class="animpakal-display" id="gnome-total">0</div>
+            <div class="animpakal-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Current +1/+1 Counters</span>
+                    <span class="summary-value" id="counter-total">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Activations</span>
+                    <span class="summary-value" id="activation-count">0</span>
+                </div>
+            </div>
+            <div class="animpakal-controls">
+                <div class="animpakal-control">
+                    <button type="button" class="animpakal-btn minus" aria-label="Remove starting counters" data-target="baseCounters">-</button>
+                    <div class="animpakal-meta">
+                        <span class="animpakal-label">Starting Counters (S)</span>
+                        <span class="animpakal-count" id="base-counters">0</span>
+                    </div>
+                    <button type="button" class="animpakal-btn plus" aria-label="Add starting counters" data-target="baseCounters">+</button>
+                </div>
+                <div class="animpakal-control">
+                    <button type="button" class="animpakal-btn minus" aria-label="Remove activation" data-target="activations">-</button>
+                    <div class="animpakal-meta">
+                        <span class="animpakal-label">Activations (A)</span>
+                        <span class="animpakal-count" id="activations-count">0</span>
+                    </div>
+                    <button type="button" class="animpakal-btn plus" aria-label="Add activation" data-target="activations">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const state = {
+            baseCounters: 0,
+            activations: 0,
+        };
+
+        const gnomeTotalEl = document.getElementById('gnome-total');
+        const counterTotalEl = document.getElementById('counter-total');
+        const activationCountEl = document.getElementById('activation-count');
+        const baseCountersEl = document.getElementById('base-counters');
+        const activationsCountEl = document.getElementById('activations-count');
+
+        const calcGnomes = () => {
+            const a = state.activations;
+            if (a <= 0) return 0;
+            return (a * (2 * state.baseCounters + a + 1)) / 2;
+        };
+
+        const updateDisplay = () => {
+            const totalCounters = state.baseCounters + state.activations;
+            gnomeTotalEl.textContent = calcGnomes().toLocaleString();
+            counterTotalEl.textContent = totalCounters.toLocaleString();
+            activationCountEl.textContent = state.activations;
+            baseCountersEl.textContent = state.baseCounters;
+            activationsCountEl.textContent = state.activations;
+        };
+
+        document.querySelectorAll('.animpakal-btn').forEach((button) => {
+            button.addEventListener('click', () => {
+                const key = button.dataset.target;
+                if (!key) return;
+                if (button.classList.contains('plus')) {
+                    state[key] += 1;
+                } else {
+                    state[key] = Math.max(0, state[key] - 1);
+                }
+                updateDisplay();
+            });
+        });
+
+        updateDisplay();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/js/service-worker.js');
+            });
+        }
+    </script>
+</body>
+</html>

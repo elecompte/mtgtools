@@ -27,18 +27,179 @@
             </form>
             <div id="importStatus" style="margin-top:20px; color:#2196F3;"></div>
         </div>
+        <div class="section tan">
+            <form id="scryfallForm">
+                <div class="input-group">
+                    <div class="input-label">Scryfall Search</div>
+                    <input type="text" id="scryfallQuery" name="scryfallQuery" placeholder="e.g. t:dragon cmc<=3 o:haste" autocomplete="off">
+                    <button type="submit" class="scryfall-button">Search Scryfall</button>
+                    <div id="scryfallStatus" class="status-text"></div>
+                </div>
+            </form>
+        </div>
     </div>
     <div id="loadingOverlay">
         <div class="loader"></div>
         <div class="loading-text">Loading, please wait...</div>
     </div>
     <script>
-    document.getElementById('importForm').addEventListener('submit', function(e) {
-        var overlay = document.getElementById('loadingOverlay');
-        overlay.classList.add('active');
-        // Let the browser submit the form normally, so Flask renders the results page
-        // Do not use fetch or preventDefault
+    var overlay = document.getElementById('loadingOverlay');
+    var overlayText = overlay.querySelector('.loading-text');
+
+    document.getElementById('importForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var status = document.getElementById('importStatus');
+        status.textContent = '';
+
+        var fileInput = document.getElementById('fileInput');
+        var textValue = document.getElementById('cardNames').value || '';
+        var file = fileInput.files && fileInput.files[0];
+        var content = '';
+
+        if (file) {
+            try {
+                content = await readFile(file);
+            } catch (err) {
+                content = '';
+            }
+        } else {
+            content = textValue;
+        }
+
+        var names = extractNames(content);
+        if (!names.length) {
+            status.textContent = 'Enter card names or upload a file.';
+            return;
+        }
+        if (names.length > 50) {
+            names = names.slice(0, 50);
+        }
+        startImport(names, status);
     });
+
+    document.getElementById('scryfallForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var status = document.getElementById('scryfallStatus');
+        var query = document.getElementById('scryfallQuery').value.trim();
+        status.textContent = '';
+
+        if (!query) {
+            status.textContent = 'Enter a Scryfall search query.';
+            return;
+        }
+
+        status.textContent = 'Searching Scryfall...';
+        try {
+            var resp = await fetch('/scryfall_search', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({query: query})
+            });
+            var data = await resp.json();
+            if (!resp.ok) {
+                status.textContent = data.error || 'Scryfall search failed.';
+                return;
+            }
+            var entries = (data.results || []).map(function(card) {
+                return {name: card.name, set: card.set, exact: true};
+            }).filter(function(card) {
+                return card.name;
+            });
+            if (!entries.length) {
+                status.textContent = 'No results found.';
+                return;
+            }
+            if (data.has_more) {
+                status.textContent = 'Showing the first page of results from Scryfall.';
+            } else {
+                status.textContent = '';
+            }
+            if (entries.length > 50) {
+                entries = entries.slice(0, 50);
+                status.textContent = 'Showing results for the first 50 cards from Scryfall.';
+            }
+            document.getElementById('cardNames').value = entries.map(function(card) {
+                return card.name;
+            }).join('\n');
+            startImport(entries, status);
+        } catch (err) {
+            status.textContent = 'Scryfall search failed.';
+        }
+    });
+
+    function readFile(file) {
+        return new Promise(function(resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function(evt) { resolve(evt.target.result || ''); };
+            reader.onerror = function(err) { reject(err); };
+            reader.readAsText(file);
+        });
+    }
+
+    function extractNames(content) {
+        return content.split(/\r?\n/).map(function(line) {
+            var trimmed = line.trim();
+            if (!trimmed) {
+                return '';
+            }
+            var parts = trimmed.split(' ');
+            if (parts.length > 1 && /^\d+$/.test(parts[0])) {
+                return trimmed.substring(parts[0].length + 1).trim();
+            }
+            return trimmed;
+        }).filter(Boolean);
+    }
+
+    async function startImport(names, statusEl) {
+        overlayText.textContent = 'Searching for cards: 0 of ' + names.length;
+        overlay.classList.add('active');
+
+        try {
+            var resp = await fetch('/import_job', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({cardNames: names})
+            });
+            var data = await resp.json();
+            if (!resp.ok) {
+                overlay.classList.remove('active');
+                if (statusEl) {
+                    statusEl.textContent = data.error || 'Import failed.';
+                }
+                return;
+            }
+            pollImportProgress(data.job_id, data.total, statusEl);
+        } catch (err) {
+            overlay.classList.remove('active');
+            if (statusEl) {
+                statusEl.textContent = 'Import failed.';
+            }
+        }
+    }
+
+    function pollImportProgress(jobId, total, statusEl) {
+        var interval = setInterval(async function() {
+            try {
+                var resp = await fetch('/import_job/' + jobId + '/progress');
+                var data = await resp.json();
+                if (!resp.ok) {
+                    throw new Error(data.error || 'Import failed.');
+                }
+                var current = data.current || 0;
+                overlayText.textContent = 'Searching for cards: ' + current + ' of ' + (total || data.total || 0);
+                if (data.status === 'done') {
+                    clearInterval(interval);
+                    window.location.href = '/import_job/' + jobId + '/results';
+                }
+            } catch (err) {
+                clearInterval(interval);
+                overlay.classList.remove('active');
+                if (statusEl) {
+                    statusEl.textContent = 'Import failed.';
+                }
+            }
+        }, 600);
+    }
     </script>
 </body>
 </html>

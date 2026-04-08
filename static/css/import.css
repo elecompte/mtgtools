@@ -116,6 +116,15 @@ input[type="file"]:hover,
 input[type="file"]::file-selector-button:hover {
     background: var(--primary);
 }
+input[type="text"] {
+    width: 100%;
+    font-size: 1.1em;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    padding: 12px;
+    margin-top: 10px;
+    box-sizing: border-box;
+}
 button[type="submit"] {
     width: 100%;
     font-size: 1.1em;
@@ -130,6 +139,29 @@ button[type="submit"] {
 }
 button[type="submit"]:hover {
     background: #ffffff;
+}
+.scryfall-button {
+    width: 100%;
+    font-size: 1.1em;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--primary);
+    color: black;
+    border: none;
+    margin-top: 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.scryfall-button:hover {
+    background: #ffffff;
+}
+.status-text {
+    margin-top: 12px;
+    color: #2196F3;
+    text-align: center;
+}
+.scryfall-results {
+    margin-top: 12px;
 }
 h2 {
     color: #2196F3;
