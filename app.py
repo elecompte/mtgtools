@@ -45,6 +45,15 @@ HEADERS = {
     "Cookie": "optimizelyId=2b184282-e6c6-41c0-85ef-3be5941512a1; tracking-preferences={%22version%22:1%2C%22destinations%22:{%22Actions%20Amplitude%22:true}%2C%22custom%22:{%22advertising%22:true%2C%22functional%22:true%2C%22marketingAndAnalytics%22:true}}; .AspNetCore.Session=CfDJ8ALidwpDTQpJquazmcIKysAsQ%2Fhxc%2Ff%2BB21qpn7uA%2FLHmlzWinwg7rjR31nQVQjA7y2Bd%2B6bM4hJrBpI0ypWv0X1PTIsX3dQ2aeDka28i7WxaChEtde9H5yRpJcRo8Ydp74nRU7u65GQKAB09EGnfPOcwft4VI4R6Sc9q1elnJYd"
 }
 
+SCRYFALL_HEADERS = {
+    # Scryfall asks API clients not to use their HTTP library's default headers.
+    "User-Agent": os.environ.get(
+        "SCRYFALL_USER_AGENT",
+        "mtgtools/1.0 (https://github.com/elecompte/mtgtools)",
+    ),
+    "Accept": "application/json;q=0.9,*/*;q=0.8",
+}
+
 JOB_LOCK = threading.Lock()
 IMPORT_JOBS = {}
 
@@ -54,6 +63,7 @@ def resolve_card_name(card_name: str):
         r = requests.get(
             "https://api.scryfall.com/cards/named",
             params={"fuzzy": card_name},
+            headers=SCRYFALL_HEADERS,
             timeout=8,
         )
         if r.status_code == 200:
@@ -215,13 +225,15 @@ def scryfall_search():
         resp = requests.get(
             "https://api.scryfall.com/cards/search",
             params={"q": query, "unique": "cards", "order": "name"},
+            headers=SCRYFALL_HEADERS,
             timeout=10,
         )
         resp.raise_for_status()
-    except requests.RequestException:
+        payload = resp.json()
+    except (requests.RequestException, ValueError):
+        app.logger.exception("Scryfall search request failed")
         return jsonify({"error": "Scryfall request failed"}), 502
 
-    payload = resp.json()
     results = []
     for card in payload.get("data", []):
         results.append({
@@ -232,13 +244,99 @@ def scryfall_search():
         })
     return jsonify({"results": results, "has_more": payload.get("has_more", False)})
 
+@app.route('/scryfall_batch', methods=['POST'])
+def scryfall_batch():
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    cursor = data.get("cursor") or {}
+    if not query:
+        return jsonify({"error": "Missing query in request body"}), 400
+
+    try:
+        page = max(1, int(cursor.get("page") or 1))
+        index = max(0, int(cursor.get("index") or 0))
+        sent = max(0, int(cursor.get("sent") or 0))
+    except (AttributeError, TypeError, ValueError):
+        return jsonify({"error": "Invalid Scryfall search cursor"}), 400
+    entries = []
+    last_payload = None
+    last_page = page
+    last_index = index
+    total_cards = None
+
+    while len(entries) < 50:
+        try:
+            resp = requests.get(
+                "https://api.scryfall.com/cards/search",
+                params={"q": query, "unique": "cards", "order": "name", "page": page},
+                headers=SCRYFALL_HEADERS,
+                timeout=10,
+            )
+            resp.raise_for_status()
+            payload = resp.json()
+        except (requests.RequestException, ValueError):
+            app.logger.exception("Scryfall batch request failed")
+            return jsonify({"error": "Scryfall request failed"}), 502
+
+        last_payload = payload
+        total_cards = payload.get("total_cards")
+        cards = payload.get("data", [])
+        if index >= len(cards) and not payload.get("has_more"):
+            break
+
+        while index < len(cards) and len(entries) < 50:
+            card = cards[index]
+            entries.append({
+                "name": card.get("name"),
+                "set": card.get("set_name"),
+            })
+            index += 1
+
+        last_page = page
+        last_index = index
+
+        if len(entries) >= 50:
+            break
+        if payload.get("has_more"):
+            page += 1
+            index = 0
+            continue
+        break
+
+    next_cursor = None
+    next_count = 0
+    if last_payload:
+        cards = last_payload.get("data", [])
+        has_more = last_payload.get("has_more", False)
+        remaining_in_page = max(0, len(cards) - last_index)
+        sent_now = sent + len(entries)
+        if total_cards is not None and sent_now < total_cards:
+            next_count = min(50, total_cards - sent_now)
+            if remaining_in_page > 0:
+                next_cursor = {"page": last_page, "index": last_index, "sent": sent_now}
+            elif has_more:
+                next_cursor = {"page": last_page + 1, "index": 0, "sent": sent_now}
+
+    return jsonify({
+        "entries": entries,
+        "next_cursor": next_cursor,
+        "next_count": next_count,
+        "total_cards": total_cards,
+    })
+
 @app.route('/import_job', methods=['POST'])
 def import_job():
     data = request.get_json(silent=True) or {}
     card_entries = data.get("cardNames") or []
+    scryfall_meta = data.get("scryfall") or None
     if not isinstance(card_entries, list) or not card_entries:
         return jsonify({"error": "Missing cardNames"}), 400
     job_id, total = create_import_job(card_entries)
+    if scryfall_meta:
+        with JOB_LOCK:
+            job = IMPORT_JOBS.get(job_id)
+            if job is not None:
+                job["scryfall_meta"] = scryfall_meta
     return jsonify({"job_id": job_id, "total": total})
 
 @app.route('/import_job/<job_id>/progress', methods=['GET'])
@@ -264,11 +362,13 @@ def import_job_results(job_id):
         results_by_store = job.get("results_by_store", {})
         all_results = job.get("all_results", [])
         card_names = job.get("card_names", [])
+        scryfall_meta = job.get("scryfall_meta")
     return render_template(
         'import_results.html',
         results_by_store=results_by_store,
         all_results=all_results,
         card_names=card_names,
+        scryfall_meta=scryfall_meta,
     )
 
 @app.route('/import', methods=['GET', 'POST'])

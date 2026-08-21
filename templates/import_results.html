@@ -17,6 +17,14 @@
         <div class="section">
             <div class="input-group">
                 <div class="title">Results</div>
+                {% if scryfall_meta and scryfall_meta.next_count %}
+                <div class="scryfall-next">
+                    <button type="button" id="scryfallNextButton" class="scryfall-button" data-query="{{ scryfall_meta.query }}" data-cursor='{{ scryfall_meta.cursor|tojson|safe }}'>
+                        Search next {{ scryfall_meta.next_count }}
+                    </button>
+                    <div id="scryfallNextStatus" class="status-text"></div>
+                </div>
+                {% endif %}
                 {% for store, results in results_by_store.items() %}
                 <div class="store-results">
                     <h2 class="storename">{{ store }}</h2>
@@ -48,5 +56,94 @@
             </div>
         </div>
     </div>
+    <div id="loadingOverlay">
+        <div class="loader"></div>
+        <div class="loading-text">Loading, please wait...</div>
+    </div>
+    <script>
+    var nextButton = document.getElementById('scryfallNextButton');
+    if (nextButton) {
+        var overlay = document.getElementById('loadingOverlay');
+        var overlayText = overlay.querySelector('.loading-text');
+        var statusEl = document.getElementById('scryfallNextStatus');
+        nextButton.addEventListener('click', async function() {
+            statusEl.textContent = '';
+            var query = nextButton.getAttribute('data-query');
+            var cursor = {};
+            try {
+                cursor = JSON.parse(nextButton.getAttribute('data-cursor') || '{}');
+            } catch (err) {
+                cursor = {};
+            }
+
+            try {
+                var resp = await fetch('/scryfall_batch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query: query, cursor: cursor})
+                });
+                var data = await resp.json();
+                if (!resp.ok) {
+                    statusEl.textContent = data.error || 'Scryfall search failed.';
+                    return;
+                }
+                var entries = (data.entries || []).map(function(card) {
+                    return {name: card.name, set: card.set, exact: true};
+                }).filter(function(card) { return card.name; });
+                if (!entries.length) {
+                    statusEl.textContent = 'No more results.';
+                    return;
+                }
+                overlayText.textContent = 'Searching for cards: 0 of ' + entries.length;
+                overlay.classList.add('active');
+
+                var jobResp = await fetch('/import_job', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        cardNames: entries,
+                        scryfall: {
+                            query: query,
+                            cursor: data.next_cursor,
+                            next_count: data.next_count
+                        }
+                    })
+                });
+                var jobData = await jobResp.json();
+                if (!jobResp.ok) {
+                    overlay.classList.remove('active');
+                    statusEl.textContent = jobData.error || 'Import failed.';
+                    return;
+                }
+                pollImportProgress(jobData.job_id, jobData.total);
+            } catch (err) {
+                overlay.classList.remove('active');
+                statusEl.textContent = 'Import failed.';
+            }
+        });
+
+        function pollImportProgress(jobId, total) {
+            var interval = setInterval(async function() {
+                try {
+                    var resp = await fetch('/import_job/' + jobId + '/progress');
+                    var data = await resp.json();
+                    if (!resp.ok) {
+                        throw new Error(data.error || 'Import failed.');
+                    }
+                    var current = data.current || 0;
+                    overlayText.textContent = 'Searching for cards: ' + current + ' of ' + (total || data.total || 0);
+                    if (data.status === 'done') {
+                        clearInterval(interval);
+                        window.location.href = '/import_job/' + jobId + '/results';
+                    }
+                } catch (err) {
+                    clearInterval(interval);
+                    overlay.classList.remove('active');
+                    statusEl.textContent = 'Import failed.';
+                }
+            }, 600);
+        }
+    }
+    </script>
 </body>
 </html>

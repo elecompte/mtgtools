@@ -1,0 +1,6 @@
+.git
+.gitignore
+**/__pycache__/
+**/*.py[cod]
+lifetrinket-pwa/
+npm-debug.log
