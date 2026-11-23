@@ -25,14 +25,10 @@
 </div>
 <div class="watch-items">
 {% for watch in watches %}
-{% set state = 'error' if watch.error else ('available' if watch.results else ('unavailable' if watch.checked else 'pending')) %}
-<article class="watch-item" data-state="{{ state }}">
+{% set state = 'pending' if watch.queued else ('error' if watch.error else ('available' if watch.results else ('unavailable' if watch.checked else 'pending'))) %}
+<article class="watch-item" data-state="{{ state }}" {% if watch.results %}data-matches='{{ watch.results|unique(attribute="url")|list|tojson }}' tabindex="0" role="group" aria-haspopup="dialog" aria-controls="match-dialog" aria-label="{{ watch.name }} · {{ state }} · Press Enter to view matches"{% endif %}>
 <div class="watch-item-header">
-<div><div class="watch-heading"><h2>{{ watch.name }}</h2>{% if watch.checked %}<p class="watch-checked">Last successful check <time datetime="{{ watch.checked|replace(' ', 'T') }}Z">{{ watch.checked }} UTC</time></p>{% endif %}</div>{% if watch.results %}
-<button type="button" class="watch-status available watch-open" data-matches='{{ watch.results|unique(attribute="url")|list|tojson }}' aria-haspopup="dialog" aria-controls="match-dialog" aria-label="View available matches for {{ watch.name }}">Available</button>
-{% else %}
-<span class="watch-status {{ state }}">{{ {'unavailable':'Unavailable','pending':'Waiting for first check','error':'Check failed'}[state] }}</span>
-{% endif %}</div>
+<div><div class="watch-heading"><h2>{{ watch.name }}</h2>{% if watch.checked %}<p class="watch-checked">Last successful check <time datetime="{{ watch.checked|replace(' ', 'T') }}Z">{{ watch.checked }} UTC</time></p>{% endif %}<span class="watch-state-text">{{ {'available':'Available','unavailable':'Unavailable','pending':'Waiting to check','error':'Check failed'}[state] }}</span></div></div>
 <form method="post" class="watch-actions">
 <button class="watch-remove" name="remove" value="{{ watch.name }}" aria-label="Remove {{ watch.name }} from watchlist">Remove</button>
 <button class="watch-check-one" name="check_card" value="{{ watch.name }}" aria-label="Check inventory for {{ watch.name }}" {% if watch.queued %}disabled{% endif %}>{{ 'Checking…' if watch.queued else 'Check now' }}</button>
@@ -40,8 +36,7 @@
 </div>
 {% if watch.error %}<p class="watch-error">{{ watch.error }}</p><p class="watch-hint">Listings from stores that failed may reflect an earlier check. Use Check now to retry.</p>{% endif %}
 
-{% if state == 'unavailable' %}<p class="watch-hint">No stock found at the last check.</p>
-{% elif state == 'pending' %}<p class="watch-hint">Your card is queued. Check back shortly.</p>{% endif %}
+
 </article>
 {% endfor %}
 </div>
@@ -64,5 +59,5 @@
 <button type="button" id="match-next" class="match-arrow" aria-label="Next match" hidden>›</button>
 </div>
 </dialog>
-<script src="/static/js/watchlist.js?v=match-navigation-3" defer></script>
+<script src="/static/js/watchlist.js?v=clickable-cards-4" defer></script>
 {% endblock %}

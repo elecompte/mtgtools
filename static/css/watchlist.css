@@ -105,3 +105,24 @@
   .watch-item { padding: 12px; }
   .watch-heading { gap: 4px; }
 }
+
+.watch-items { gap: 10px; }
+.watch-item { padding: 10px 14px; }
+.watch-item[data-state="available"] { background: #183a2a; border-color: #397a53; }
+.watch-item[data-state="unavailable"] { background: #303536; border-color: #596163; }
+.watch-item[data-state="pending"] { background: #1b354d; border-color: #416e99; }
+.watch-item[data-state="error"] { background: #482626; border-color: #995252; }
+.watch-item[data-matches] { cursor: pointer; }
+.watch-item[data-matches]:hover { box-shadow: 0 0 0 1px var(--accent); }
+.watch-heading { margin-bottom: 0; gap: 4px 12px; }
+.watch-heading .watch-checked { color: #d1dad5; }
+.watch-state-text { font-size: .78rem; color: #e1e8e2; }
+.watch-actions { display: flex; gap: 6px; margin-left: auto; }
+.watch-actions button { width: auto; }
+.watch-item .watch-remove, .watch-item .watch-check-one { background: #11191980; color: var(--ink); border-color: #ffffff40; }
+@media(max-width: 600px) {
+  .watch-item { padding: 10px 12px; }
+  .watch-item-header { flex-wrap: wrap; gap: 8px; }
+  .watch-item-header > div { flex: 1 1 140px; }
+  .watch-actions button { padding: 6px 10px; }
+}

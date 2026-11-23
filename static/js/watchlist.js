@@ -107,12 +107,21 @@ function showMatch(index) {
   dialog.classList.toggle('has-multiple', multiple);
   loadDetails(card);
 }
-document.querySelectorAll('[data-matches]').forEach(button => {
-  button.addEventListener('click', () => {
-    activeMatches = JSON.parse(button.dataset.matches);
+document.querySelectorAll('[data-matches]').forEach(container => {
+  const openMatches = () => {
+    activeMatches = JSON.parse(container.dataset.matches);
     if (!activeMatches.length) return;
     dialog.showModal();
     showMatch(0);
+  };
+  container.addEventListener('click', event => {
+    if (event.target.closest('button, form, a, input, select')) return;
+    openMatches();
+  });
+  container.addEventListener('keydown', event => {
+    if (event.target !== container || !['Enter', ' '].includes(event.key)) return;
+    event.preventDefault();
+    openMatches();
   });
 });
 field('match-prev').addEventListener('click', () => showMatch(matchIndex - 1));
