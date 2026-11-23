@@ -86,20 +86,59 @@ async function loadDetails(card) {
     field('match-retry').hidden = false;
   }
 }
-document.querySelectorAll('[data-card]').forEach(button => {
+let activeMatches = [];
+let matchIndex = 0;
+function showMatch(index) {
+  if (!activeMatches.length) return;
+  matchIndex = (index + activeMatches.length) % activeMatches.length;
+  const card = activeMatches[matchIndex];
+  selectedCard = card;
+  field('match-name').textContent = card.name;
+  field('match-store').textContent = 'Store · ' + card.store;
+  field('match-set').textContent = 'Listing set · ' + (card.set || 'Unavailable');
+  field('match-price').textContent = card.price == null ? 'Price unavailable' :
+    new Intl.NumberFormat(undefined, {style:'currency', currency:'USD'}).format(Number(card.price));
+  field('match-store-link').href = card.url;
+  const multiple = activeMatches.length > 1;
+  field('match-prev').hidden = !multiple;
+  field('match-next').hidden = !multiple;
+  field('match-position').hidden = !multiple;
+  field('match-position').textContent = 'Match ' + (matchIndex + 1) + ' of ' + activeMatches.length;
+  dialog.classList.toggle('has-multiple', multiple);
+  loadDetails(card);
+}
+document.querySelectorAll('[data-matches]').forEach(button => {
   button.addEventListener('click', () => {
-    const card = JSON.parse(button.dataset.card);
-    selectedCard = card;
-    field('match-name').textContent = card.name;
-    field('match-store').textContent = 'Store · ' + card.store;
-    field('match-set').textContent = 'Listing set · ' + (card.set || 'Unavailable');
-    field('match-price').textContent = card.price == null ? 'Price unavailable' :
-      new Intl.NumberFormat(undefined, {style:'currency', currency:'USD'}).format(Number(card.price));
-    field('match-store-link').href = card.url;
+    activeMatches = JSON.parse(button.dataset.matches);
+    if (!activeMatches.length) return;
     dialog.showModal();
-    loadDetails(card);
+    showMatch(0);
   });
 });
+field('match-prev').addEventListener('click', () => showMatch(matchIndex - 1));
+field('match-next').addEventListener('click', () => showMatch(matchIndex + 1));
+dialog.addEventListener('keydown', event => {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault();
+    showMatch(matchIndex + (event.key === 'ArrowLeft' ? -1 : 1));
+  }
+});
+let touchStart;
+const swipe = field('match-swipe');
+swipe.addEventListener('touchstart', event => {
+  touchStart = event.touches.length === 1 && !event.target.closest('a, button') ?
+    {x:event.touches[0].clientX, y:event.touches[0].clientY} : null;
+}, {passive:true});
+swipe.addEventListener('touchend', event => {
+  if (!touchStart || event.changedTouches.length !== 1) return;
+  const dx = event.changedTouches[0].clientX - touchStart.x;
+  const dy = event.changedTouches[0].clientY - touchStart.y;
+  touchStart = null;
+  if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    showMatch(matchIndex + (dx < 0 ? 1 : -1));
+  }
+}, {passive:true});
+swipe.addEventListener('touchcancel', () => { touchStart = null; });
 field('match-close').addEventListener('click', () => dialog.close());
 dialog.addEventListener('close', () => detailRequest?.abort());
 dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });

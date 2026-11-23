@@ -28,26 +28,16 @@
 {% set state = 'error' if watch.error else ('available' if watch.results else ('unavailable' if watch.checked else 'pending')) %}
 <article class="watch-item" data-state="{{ state }}">
 <div class="watch-item-header">
-<div><h2>{{ watch.name }}</h2><span class="watch-status {{ state }}">{{ {'available':'Available','unavailable':'Unavailable','pending':'Waiting for first check','error':'Check failed'}[state] }}</span></div>
+<div><h2>{{ watch.name }}</h2>{% if watch.results %}
+<button type="button" class="watch-status available watch-open" data-matches='{{ watch.results|unique(attribute="url")|list|tojson }}' aria-haspopup="dialog" aria-controls="match-dialog" aria-label="View available matches for {{ watch.name }}">Available</button>
+{% else %}
+<span class="watch-status {{ state }}">{{ {'unavailable':'Unavailable','pending':'Waiting for first check','error':'Check failed'}[state] }}</span>
+{% endif %}</div>
 <form method="post"><button class="watch-remove" name="remove" value="{{ watch.name }}" aria-label="Remove {{ watch.name }} from watchlist">Remove</button></form>
 </div>
 {% if watch.error %}<p class="watch-error">{{ watch.error }}</p><p class="watch-hint">Listings from stores that failed may reflect an earlier check. Use Check now to retry.</p>{% endif %}
 {% if watch.checked %}<p class="watch-checked">Last successful check <time datetime="{{ watch.checked|replace(' ', 'T') }}Z">{{ watch.checked }} UTC</time></p>{% endif %}
-{% if watch.results %}
-{% set matches = watch.results|unique(attribute='url')|list %}
-<details class="watch-matches"><summary>{{ matches|length }} {{ 'match' if matches|length == 1 else 'matches' }} found</summary>
-<div class="watch-listings">
-{% for store, listings in watch.results|groupby('store') %}
-<section><h3>{{ store }}</h3>
-{% for card in listings|unique(attribute='url') %}
-<button type="button" class="watch-listing" data-card='{{ card|tojson }}'>
-<div><strong>{{ card.name }}</strong><small>{{ card.set or 'Set unavailable' }}</small></div>
-<span>{% if card.price is not none %}{{ '$%.2f'|format(card.price|float) }}{% else %}View price{% endif %} ↗</span>
-</button>
-{% endfor %}</section>
-{% endfor %}
-</div></details>
-{% elif state == 'unavailable' %}<p class="watch-hint">No stock found at the last check.</p>
+{% if state == 'unavailable' %}<p class="watch-hint">No stock found at the last check.</p>
 {% elif state == 'pending' %}<p class="watch-hint">Your card is queued. Check back shortly.</p>{% endif %}
 </article>
 {% endfor %}
@@ -59,12 +49,17 @@
 </main>
 <dialog id="match-dialog" aria-labelledby="match-name">
 <div class="match-dialog-header"><h2 id="match-name"></h2><button type="button" id="match-close" aria-label="Close card details">✕</button></div>
-<div class="match-content"><div><img id="match-image" alt="" hidden><p id="match-image-set"></p></div><div>
+<p id="match-position" role="status" hidden></p>
+<div class="match-carousel">
+<button type="button" id="match-prev" class="match-arrow" aria-label="Previous match" hidden>‹</button>
+<div class="match-content" id="match-swipe"><div><img id="match-image" alt="" hidden><p id="match-image-set"></p></div><div>
 <p id="match-store"></p><p id="match-price"></p><p id="match-set"></p>
 <p id="match-status" role="status"></p><p id="match-oracle"></p>
 <button type="button" id="match-retry" hidden>Retry card details</button>
 <a id="match-store-link" target="_blank" rel="noopener">View at store ↗</a>
 </div></div>
+<button type="button" id="match-next" class="match-arrow" aria-label="Next match" hidden>›</button>
+</div>
 </dialog>
-<script src="/static/js/watchlist.js?v=local-symbols-2" defer></script>
+<script src="/static/js/watchlist.js?v=match-navigation-3" defer></script>
 {% endblock %}

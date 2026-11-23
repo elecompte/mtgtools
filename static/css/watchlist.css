@@ -77,3 +77,16 @@
 #match-image { display: block; height: auto; background: transparent; }
 #match-close { background: transparent !important; border: 0 !important; }
 #match-oracle .oracle-symbol { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -.18em; margin: 0 .05em; }
+
+.watchlist button.watch-status.available { background: #1b4935; color: #b4efcd; border: 1px solid #508b68; border-radius: 20px; padding: 6px 14px; font-size: .85rem; min-height: 44px; }
+.watchlist button.watch-status.available:hover { background: #286447; }
+.match-carousel { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 12px; }
+.has-multiple .match-carousel { grid-template-columns: 44px minmax(0, 1fr) 44px; }
+#match-dialog .match-arrow { font-size: 2rem; padding: 0; width: 44px; min-height: 64px; }
+#match-position { margin: 0 0 16px; color: var(--muted); }
+#match-swipe { touch-action: pan-y pinch-zoom; min-width: 0; }
+@media(max-width: 600px) {
+  #match-dialog { padding: 16px 10px; }
+  .has-multiple .match-carousel { grid-template-columns: 32px minmax(0, 1fr) 32px; gap: 6px; }
+  #match-dialog .match-arrow { width: 32px; }
+}
