@@ -10,7 +10,21 @@
 .watch-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 26px 0 16px; }
 .watch-toolbar select { font: inherit; background: var(--panel); color: var(--ink); padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
 .watch-toolbar span { color: var(--muted); font-size: .9rem; }
-.watch-item { border-top: 1px solid var(--line); padding: 22px 0; }
+.watch-items { display: grid; gap: 18px; }
+.watch-item {
+  min-width: 0;
+  padding: clamp(16px, 3vw, 24px);
+  background: var(--panel);
+  border: 1px solid #40564e;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px #0003;
+}
+.watch-item-header > div { min-width: 0; }
+.watch-item-header form { flex-shrink: 0; }
+.watch-item .watch-matches[open] { border-top: 1px solid var(--line); margin-top: 16px; }
+.watch-item .watch-listings { padding-top: 4px; }
+.watch-item button.watch-listing { background: #111d19; }
+.watch-item button.watch-listing:hover { background: #293c36; }
 .watch-item-header { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
 .watch-item h2 { margin: 0 0 10px; font-size: 1.45rem; overflow-wrap: anywhere; }
 .watch-item h3 { margin: 14px 0 6px; font-size: 1rem; }
