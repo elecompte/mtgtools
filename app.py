@@ -406,6 +406,11 @@ def import_cards():
     # Always render results page, never send CSV
     return render_template('import_results.html', results_by_store=results_by_store, all_results=all_results, card_names=limited_names)
 
+@app.get('/service-worker.js')
+def service_worker():
+    return app.send_static_file('js/service-worker.js')
+
+
 @app.route('/')
 def index():
     return render_template('index.html')

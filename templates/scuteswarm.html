@@ -1,100 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Scute Swarm Calculator</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#1976d2">
-    <link rel="icon" href="/static/img/mtg.ico">
-    <link rel="apple-touch-icon" href="/static/img/mtg.png">
-    <link rel="stylesheet" href="/static/css/scuteswarm.css">
-    <link rel="stylesheet" href="/static/css/subpage.css">
-    
-    <script>
-    function increment(id) {
-        const input = document.getElementById(id);
-        const value = parseInt(input.value, 10);
-        input.value = isNaN(value) ? 1 : value + 1;
-    }
-    function decrement(id) {
-        const input = document.getElementById(id);
-        const value = parseInt(input.value, 10);
-        input.value = isNaN(value) || value <= 0 ? 0 : value - 1;
-    }
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/static/js/service-worker.js');
-      });
-    }
-</script>
-</head>
-<body>
-    <div class="title-section">
-        <a href="/" class="back-arrow" aria-label="Back to main page">&#8592;</a>
-        <span class="title-text">Scute Swarm Calculator</span>
-    </div>
-    <form method="post" class="container">
-        <div class="top-row">
-            <div class="section green">
-                <div class="input-group">
-                    <div class="input-label">Scute <br /> Swarms</div>
-                    <div class="input-controls">
-                        <button type="button" onclick="decrement('initial')">-</button>
-                        <input id="initial" type="number" name="initial" placeholder="Scute Swarms" value="{{ initial }}" required>
-                        <button type="button" onclick="increment('initial')">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section tan">      
-                <div class="input-group">
-                    <div class="input-label">Lands <br /> Played</div>
-                    <div class="input-controls">
-                        <button type="button" onclick="decrement('lands')">-</button>
-                        <input id="lands" type="number" name="lands" placeholder="Lands Played" value="{{ lands }}" required>
-                        <button type="button" onclick="increment('lands')">+</button>
-                    </div>
-                </div> 
-            </div>
-        </div>
-        <div class="doubler-row">
-            <div class="section blue doubler-section">
-                <div class="input-group">
-                    <div class="input-label">Swarms <br /> Per Land</div>
-                    <div class="input-controls">
-                        <button type="button" onclick="decrement('doubler')">-</button>
-                        <input id="doubler" type="number" name="doubler" placeholder="Doublers" value="{{ doubler }}" required>
-                        <button type="button" onclick="increment('doubler')">+</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <button type="submit">Calculate</button>
-        <div class="section blue result" id="result-section">
-            <span id="final-swarms-value" style="font-size: 100pt; font-weight: bold; width: 100%; text-align: center; display: block;">
-                {% if final_swarms is not none %}{{ final_swarms | int | string }}{% endif %}
-            </span>
-        </div>
-        <script>
-        // Only update the value if the user changes the inputs, not on page load
-        function updateFinalSwarms() {
-            const initial = parseInt(document.getElementById('initial').value, 10) || 0;
-            const lands = parseInt(document.getElementById('lands').value, 10) || 0;
-            const doubler = parseInt(document.getElementById('doubler').value, 10) || 1;
-            // Use the same formula as backend
-            const finalSwarms = initial + initial * lands * Math.pow(2, doubler);
-            const el = document.getElementById('final-swarms-value');
-            if (initial > 0 && lands >= 0) {
-                el.textContent = finalSwarms.toLocaleString();
-            } else {
-                el.textContent = '';
-            }
-        }
-        //document.getElementById('initial').addEventListener('input', updateFinalSwarms);
-        //document.getElementById('lands').addEventListener('input', updateFinalSwarms);
-        //document.getElementById('doubler').addEventListener('input', updateFinalSwarms);
-        // Do NOT call updateFinalSwarms() on page load, so backend value is shown initially
-        </script>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Scute Swarm Calculator{% endblock %}
+{% block page %}tool{% endblock %}
+{% block nav %}<a href="?overlay=1">OBS overlay ↗</a>{% endblock %}
+{% block content %}
+<main class="tool-card scute"><h1>Scute Swarm</h1><p>Total swarms</p><output id="swarm-total">{{ final_swarms or 0 }}</output>
+<form method="post" id="swarm-form">
+{% for key, label, value in [('initial','Starting swarms',initial),('lands','Lands played',lands),('doubler','Swarms per land',doubler)] %}
+<label for="{{ key }}">{{ label }}</label><div class="stepper">
+<button type="button" data-step="-1" aria-label="Decrease {{ label }}">−</button>
+<input type="number" min="0" required id="{{ key }}" name="{{ key }}" value="{{ value or 0 }}">
+<button type="button" data-step="1" aria-label="Increase {{ label }}">+</button></div>
+{% endfor %}
+<button type="submit">Calculate</button></form></main>
+{% endblock %}

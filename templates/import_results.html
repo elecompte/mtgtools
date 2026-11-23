@@ -1,22 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Portals Lookup Results</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/static/css/tiles.css">
-    <link rel="stylesheet" href="/static/css/import.css">
-    <link rel="stylesheet" href="/static/css/subpage.css">
-    <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#1976d2">
-    <link rel="icon" href="/static/img/mtg.ico">
-    <link rel="apple-touch-icon" href="/static/img/mtg.png">
-</head>
-<body>
-    <a href="/import" class="back-arrow" aria-label="Back to main page">&#8592;</a>
-    <div class="container">
+{% extends "base.html" %}
+{% block title %}Portals Lookup Results{% endblock %}
+{% block page %}portal-page{% endblock %}
+{% block nav %}<a href="/import">Card lookup</a>{% endblock %}
+{% block content %}
+
+    <main class="portal">
         <div class="section">
             <div class="input-group">
-                <div class="title">Results</div>
+                <h1>Lookup results</h1>
                 {% if scryfall_meta and scryfall_meta.next_count %}
                 <div class="scryfall-next">
                     <button type="button" id="scryfallNextButton" class="scryfall-button" data-query="{{ scryfall_meta.query }}" data-cursor='{{ scryfall_meta.cursor|tojson|safe }}'>
@@ -55,10 +46,10 @@
                 {% endfor %}
             </div>
         </div>
-    </div>
+    </main>
     <div id="loadingOverlay">
         <div class="loader"></div>
-        <div class="loading-text">Loading, please wait...</div>
+        <div role="status" class="loading-text">Loading, please wait...</div>
     </div>
     <script>
     var nextButton = document.getElementById('scryfallNextButton');
@@ -145,5 +136,4 @@
         }
     }
     </script>
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MTG Tools{% endblock %}</title>
+  <meta name="theme-color" content="#111919">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/static/img/mtg.ico">
+  <link rel="apple-touch-icon" href="/static/img/mtg.png">
+  {% block styles %}{% endblock %}
+  <link rel="stylesheet" href="/static/css/studio.css">
+  <script src="/static/js/studio.js" defer></script>
+</head>
+<body class="{% block page %}{% endblock %}">
+  <nav><a href="/"><img src="/static/img/mtg.png" alt=""> MTG Tools</a>{% block nav %}{% endblock %}</nav>
+  {% block content %}{% endblock %}
+</body>
+</html>

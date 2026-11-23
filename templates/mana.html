@@ -1,18 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Floating Mana Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#1976d2">
-    <link rel="icon" href="/static/img/mtg.ico">
-    <link rel="apple-touch-icon" href="/static/img/mtg.png">
-    <link rel="stylesheet" href="/static/css/tiles.css">
-    <link rel="stylesheet" href="/static/css/subpage.css">
-    <link rel="stylesheet" href="/static/css/mana.css">
-</head>
-<body>
-    <a href="/" class="back-arrow" aria-label="Back to main page">&#8592;</a>
+{% extends "base.html" %}
+{% block title %}Floating Mana Tracker{% endblock %}
+{% block page %}tool{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/mana.css">{% endblock %}
+{% block nav %}<a href="?overlay=1">OBS overlay ↗</a>{% endblock %}
+{% block content %}
+<main class="tool-card"><h1>Floating mana</h1>
     <div class="mana-filter-bar">
         <input type="checkbox" class="mana-toggle toggle-white" data-color="white" aria-label="Show white mana" checked>
         <input type="checkbox" class="mana-toggle toggle-blue" data-color="blue" aria-label="Show blue mana" checked>
@@ -61,7 +53,8 @@
             <span class="mana-label">Colorless</span>
         </div>
     </div>
-    <script>
+    </main>
+<script>
         const manaTotals = {
             white: 0,
             blue: 0,
@@ -134,11 +127,6 @@
             });
         }
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/static/js/service-worker.js');
-            });
-        }
+
     </script>
-</body>
-</html>
+{% endblock %}
