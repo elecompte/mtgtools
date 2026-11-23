@@ -109,7 +109,14 @@ def lookup_card_at_store(card_name, store, strict=False):
                 results.append({
                     "name": item.get("name"),
                     "url": f'{store["baseUrl"]}/catalog/magic/{item.get("setUrlName")}/{item.get("productUrlName")}/{item.get("id")}',
-                    "inStock": item.get("quantity") or item.get("availableQuantity"),
+                    # Catalog search defaults to in-stock listings. Its items may
+                    # omit quantities entirely, as in Easton's Peek response.
+                    # Keep an explicit zero instead of treating it as missing.
+                    "inStock": next(
+                        (item[field] for field in ("quantity", "availableQuantity", "inStock")
+                         if item.get(field) is not None),
+                        True,
+                    ),
                     "set": item.get("setName"),
                     "price": item.get("lowestPrice"),
                     "store": store["storeName"]
