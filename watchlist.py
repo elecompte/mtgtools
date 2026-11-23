@@ -162,10 +162,14 @@ def card_details():
         if card is None:
             return jsonify(error="The exact printing could not be identified. View the store listing for its image."), 404
         faces = card.get("card_faces") or [card]
+        unique_faces = list(dict.fromkeys(
+            (face.get("name", ""), face.get("oracle_text", "")) for face in faces
+        ))
+        face_text = unique_faces[0][1] if len(unique_faces) == 1 else "\n\n".join(
+            name + "\n" + text for name, text in unique_faces
+        )
         return jsonify(
-            oracle_text=card.get("oracle_text") or "\n\n".join(
-                face.get("name", "") + "\n" + face.get("oracle_text", "") for face in faces
-            ),
+            oracle_text=card.get("oracle_text") or face_text,
             image=media_url((card.get("image_uris") or faces[0].get("image_uris") or {}).get("normal")),
             image_set=card.get("set_name"),
         )
