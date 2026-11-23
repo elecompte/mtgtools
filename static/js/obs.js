@@ -3,38 +3,18 @@
   const frame = document.querySelector('#card-frame');
   const select = document.querySelector('#card');
   const status = document.querySelector('#sync');
-  const hex = bytes => Array.from(bytes, n => n.toString(16).padStart(2, '0')).join('');
-  let display = location.hash.slice(1);
-  let key;
   if (control) {
-    key = /^[0-9a-f]{64}$/.test(display) ? display : localStorage.getItem('obs-control-key');
-    if (!key) {
-      key = hex(crypto.getRandomValues(new Uint8Array(32)));
-    }
-    localStorage.setItem('obs-control-key', key);
-    document.querySelector('#control-url').value = location.origin + '/obs/control#' + key;
-    // The server derives the public identifier too, including on plain LAN HTTP.
-    const response = await fetch('/obs/display-id', {method: 'POST', headers: {'X-OBS-Key': key}});
-    if (!response.ok) throw Error('Could not connect');
-    display = await response.text();
     const url = document.querySelector('#display-url');
-    url.value = location.origin + '/obs#' + display;
+    url.value = location.origin + '/obs';
     document.querySelector('#copy-url').onclick = async () => {
       try { await navigator.clipboard.writeText(url.value); }
       catch { url.select(); document.execCommand('copy'); }
     };
   }
-  if (!/^[a-f0-9]{64}$/.test(display)) {
-    const setup = document.createElement('a');
-    setup.href = '/obs/control';
-    setup.textContent = 'Open OBS controls to get your display URL';
-    frame.replaceWith(setup);
-    return;
-  }
-  const endpoint = '/obs/state/' + display;
+  const endpoint = '/obs/state';
   const cards = ['valet','krenko','animpakal','scuteswarm','mana'];
   let current, ready = false, pending, sending = false, lastSent;
-  const saved = control ? JSON.parse(localStorage.getItem('obs-cards-' + display) || '{}') : {};
+  const saved = control ? JSON.parse(localStorage.getItem('obs-cards-shared') || '{}') : {};
 
   function capture(doc) {
     const values = {};
@@ -64,7 +44,7 @@
     sending = true;
     const body = pending;
     try {
-      const r = await fetch(endpoint, {method:'PUT', headers:{'Content-Type':'application/json','X-OBS-Key':key}, body});
+      const r = await fetch(endpoint, {method:'PUT', headers:{'Content-Type':'application/json'}, body});
       if (!r.ok) throw Error();
       lastSent = body;
       if (pending === body) pending = null;
@@ -79,7 +59,7 @@
     const body = JSON.stringify({card:current,values});
     if (body !== lastSent) {
       saved[current] = values;
-      localStorage.setItem('obs-cards-' + display, JSON.stringify(saved));
+      localStorage.setItem('obs-cards-shared', JSON.stringify(saved));
       pending = body;
     } else { pending = sending ? body : null; }
     publish();
@@ -110,7 +90,7 @@
   }
 
   if (control) {
-    select.value = localStorage.getItem('obs-active-card-' + display) || 'valet';
+    select.value = localStorage.getItem('obs-active-card-shared') || 'valet';
     const previous = await fetch(endpoint, {cache:'no-store'});
     if (!previous.ok) throw Error('Could not load the display');
     const live = await previous.json();
@@ -119,7 +99,7 @@
       saved[live.card] = live.values;
     }
     const choose = () => {
-      localStorage.setItem('obs-active-card-' + display,select.value);
+      localStorage.setItem('obs-active-card-shared',select.value);
       show(select.value, saved[select.value]);
     };
     select.onchange = () => { snapshot(); choose(); };

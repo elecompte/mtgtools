@@ -1,8 +1,6 @@
-"""Store the most recent frame for each private OBS display."""
-import hashlib
+"""Store the most recent frame for the shared OBS display."""
 import json
 import os
-import re
 import sqlite3
 import tempfile
 
@@ -19,13 +17,10 @@ def obs_page():
     return render_template("obs.html", control=request.path.endswith("/control"), cards=CARDS)
 
 
-@obs.route("/obs/state/<display>", methods=["GET", "PUT"])
-def obs_state(display):
-    if not re.fullmatch(r"[0-9a-f]{64}", display):
-        abort(404)
+@obs.route("/obs/state", methods=["GET", "PUT"])
+def obs_state():
     if request.method == "PUT":
-        key = request.headers.get("X-OBS-Key", "")
-        if not re.fullmatch(r"[0-9a-f]{64}", key) or hashlib.sha256(bytes.fromhex(key)).hexdigest() != display:
+        if request.headers.get("Sec-Fetch-Site") == "cross-site":
             abort(403)
         if not request.content_length or request.content_length > 8192:
             abort(413)
@@ -37,19 +32,14 @@ def obs_state(display):
         with db:
             db.execute("CREATE TABLE IF NOT EXISTS displays (id TEXT PRIMARY KEY, frame TEXT NOT NULL)")
             if request.method == "PUT":
-                db.execute("INSERT OR REPLACE INTO displays VALUES (?, ?)", (display, json.dumps(frame)))
+                db.execute("INSERT OR REPLACE INTO displays VALUES (?, ?)", ("shared", json.dumps(frame)))
                 return "", 204
-            row = db.execute("SELECT frame FROM displays WHERE id = ?", (display,)).fetchone()
-            response = jsonify(json.loads(row[0]) if row else None)
+            # Use the last legacy display until the shared controller first writes.
+            row = db.execute(
+                "SELECT frame FROM displays ORDER BY (id = 'shared') DESC, rowid DESC LIMIT 1"
+            ).fetchone()
+            response = jsonify(json.loads(row[0]) if row else {"card": "valet", "values": {}})
             response.cache_control.no_store = True
             return response
     finally:
         db.close()
-
-
-@obs.post("/obs/display-id")
-def display_id():
-    key = request.headers.get("X-OBS-Key", "")
-    if not re.fullmatch(r"[0-9a-f]{64}", key):
-        abort(400)
-    return hashlib.sha256(bytes.fromhex(key)).hexdigest()
