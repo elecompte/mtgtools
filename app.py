@@ -23,8 +23,9 @@ STORES = [
     },
     {
         "storeName": "Easton",
-        "api": "https://portalsgames.tcgplayerpro.com/api/catalog/search",
-        "baseUrl": "https://portalsgames.tcgplayerpro.com",
+        "api": "https://portalsgamesest.tcgplayerpro.com/api/catalog/search",
+        "baseUrl": "https://portalsgamesest.tcgplayerpro.com",
+        "query_search": True,
     },
     {
         "storeName": "Kent Island",
@@ -80,6 +81,14 @@ def lookup_card_at_store(card_name, store, strict=False):
     headers = HEADERS.copy()
     headers["origin"] = store["baseUrl"]
     headers["referer"] = f'{store["baseUrl"]}/search/products?productName={card_name}&productLineName=Magic:+The+Gathering'
+    if store.get("query_search"):
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Content-Type": "application/json",
+            "Origin": store["baseUrl"],
+        }
     def fetch_results(name):
         payload = {
             "context": {"productLineName": "Magic: The Gathering"},
@@ -88,6 +97,8 @@ def lookup_card_at_store(card_name, store, strict=False):
             "size": 24,
             "sort": [{"field": "in-stock-price-sort", "order": "desc"}]
         }
+        if store.get("query_search"):
+            payload.update(query=name, context=None, filters={})
         try:
             resp = requests.post(store["api"], headers=headers, json=payload, timeout=10)
             resp.raise_for_status()
