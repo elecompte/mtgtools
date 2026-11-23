@@ -90,3 +90,18 @@
   .has-multiple .match-carousel { grid-template-columns: 32px minmax(0, 1fr) 32px; gap: 6px; }
   #match-dialog .match-arrow { width: 32px; }
 }
+
+.watch-items { gap: 12px; }
+.watch-item { padding: 14px 18px; border-radius: 12px; }
+.watch-item-header { gap: 12px; align-items: center; }
+.watch-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-bottom: 8px; }
+.watch-heading h2 { margin: 0; font-size: 1.2rem; }
+.watch-heading .watch-checked { margin: 0; font-size: .78rem; }
+.watch-actions { display: grid; gap: 6px; }
+.watch-actions button { width: 100%; padding: 6px 12px; white-space: nowrap; }
+.watchlist .watch-check-one { border: 1px solid var(--line); border-radius: 8px; min-height: 44px; font-size: .85rem; background: #293c36; color: var(--ink); }
+.watch-item > .watch-hint, .watch-item > .watch-error { margin: 8px 0 0; }
+@media(max-width: 600px) {
+  .watch-item { padding: 12px; }
+  .watch-heading { gap: 4px; }
+}

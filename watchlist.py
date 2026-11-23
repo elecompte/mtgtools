@@ -26,7 +26,11 @@ def connect():
 def page():
     with connect() as db:
         if request.method == "POST":
-            if request.form.get("check_now"):
+            if request.form.get("check_card"):
+                token = uuid.uuid4().hex
+                db.execute("INSERT OR IGNORE INTO watch_checks SELECT name, ? FROM watches WHERE name=?",
+                           (token, request.form["check_card"]))
+            elif request.form.get("check_now"):
                 token = uuid.uuid4().hex
                 db.execute("INSERT OR IGNORE INTO watch_checks SELECT name, ? FROM watches", (token,))
             elif request.form.get("remove"):
@@ -37,7 +41,7 @@ def page():
                     if name.strip():
                         db.execute("INSERT OR IGNORE INTO watches(name) VALUES (?)", (name.strip()[:200],))
             return redirect("/watchlist", code=303)
-        rows = [dict(row) for row in db.execute("SELECT * FROM watches ORDER BY name")]
+        rows = [dict(row) for row in db.execute("SELECT watches.*, EXISTS(SELECT 1 FROM watch_checks WHERE watch_checks.name=watches.name) AS queued FROM watches ORDER BY name")]
     for row in rows:
         row["results"] = json.loads(row["results"])
     with connect() as db:
