@@ -1,6 +1,7 @@
 services:
   mtgtools:
     image: mtgtools:latest
+    pull_policy: build
     container_name: mtgtools
     restart: always
     build:
