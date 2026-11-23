@@ -1,5 +1,5 @@
 services:
-  scuteswarm:
+  mtgtools:
     image: mtgtools:latest
     container_name: mtgtools
     restart: always
