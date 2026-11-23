@@ -81,8 +81,10 @@
       if (!control) doc.body.classList.add('obs-readonly');
       apply(doc, latest);
       if (control) frame.contentWindow.restoreObsState?.(latest);
-      const resize = () => { frame.style.height = Math.ceil(doc.body.getBoundingClientRect().height + 4) + 'px'; };
-      new ResizeObserver(resize).observe(doc.body);
+      if (control) {
+        const resize = () => { frame.style.height = Math.ceil(doc.body.getBoundingClientRect().height + 4) + 'px'; };
+        new ResizeObserver(resize).observe(doc.body);
+      }
       ready = true;
       if (control) snapshot();
     };

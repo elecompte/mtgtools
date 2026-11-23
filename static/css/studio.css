@@ -88,3 +88,25 @@ body.obs-readonly button, body.obs-readonly .mana-filter-bar, body.obs-readonly 
 body.obs-readonly :is(.krenko-control,.animpakal-control,.valet-controls,.valet-power-controls,.mana-tile) { grid-template-columns: 1fr; }
 .obs-control details { margin: .75rem 0; }
 .obs-control details input { width: min(100%,600px); }
+
+/* The broadcast iframe is the canvas; each visible card fills it edge to edge. */
+.obs-display #card-frame { width: 600px; height: 400px; }
+body.obs-readonly [class$="-card"] {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 24px;
+}
+.obs-readonly :is(.animpakal-display,.krenko-display,.valet-display) {
+  font-size: 72px;
+  line-height: 1;
+  margin: 8px 0;
+}
+.obs-readonly :is(.animpakal-controls,.krenko-controls) {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+}
+.obs-readonly .animpakal-summary { margin: 0; }
+.obs-readonly .mana-grid { margin: 0; }
+.obs-readonly .scute output { margin: auto; }
