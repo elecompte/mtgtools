@@ -128,5 +128,11 @@
         }
 
 
+        window.restoreObsState = values => {
+            for (const color of Object.keys(manaTotals)) {
+                manaTotals[color] = Number(values['value-' + color] || 0);
+                updateValue(color);
+            }
+        };
     </script>
 {% endblock %}

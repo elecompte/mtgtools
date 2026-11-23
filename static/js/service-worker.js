@@ -1,4 +1,4 @@
-const cacheName = 'mtgtools-studio-v1';
+const cacheName = 'mtgtools-studio-v2';
 const assets = [
   "/",
   "/mana",

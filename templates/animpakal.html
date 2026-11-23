@@ -85,5 +85,10 @@
         updateDisplay();
 
 
+        window.restoreObsState = values => {
+            if ('base-counters' in values) state.baseCounters = Number(String(values['base-counters']).replace(/[^0-9.e+]/gi, ''));
+            if ('activations-count' in values) state.activations = Number(String(values['activations-count']).replace(/[^0-9.e+]/gi, ''));
+            updateDisplay();
+        };
     </script>
 {% endblock %}

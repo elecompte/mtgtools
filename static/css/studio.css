@@ -75,3 +75,16 @@ td a { color: var(--accent); }
   .entry { grid-template-columns: 88px 1fr auto; }
   .entry picture { grid-column: auto; height: 100%; min-height: 78px; }
 }
+
+.obs-display, html:has(.obs-display), html:has(.overlay) { background: transparent; color-scheme: normal; }
+.obs-display nav { display: none; }
+#card-frame { display: block; width: min(100%,600px); height: 0; border: 0; }
+.obs-control select, .obs-control button { padding: .65rem; border-radius: 8px; font: inherit; }
+.obs-control label { display: block; margin-top: 1rem; }
+.obs-url { display: flex; gap: .5rem; max-width: 600px; }
+.obs-url input { flex: 1; }
+#sync { margin: .5rem 0 1rem; }
+body.obs-readonly button, body.obs-readonly .mana-filter-bar, body.obs-readonly #swarm-form { display: none; }
+body.obs-readonly :is(.krenko-control,.animpakal-control,.valet-controls,.valet-power-controls,.mana-tile) { grid-template-columns: 1fr; }
+.obs-control details { margin: .75rem 0; }
+.obs-control details input { width: min(100%,600px); }

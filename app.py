@@ -10,6 +10,8 @@ import requests
 
 
 app = Flask(__name__)
+from obs import obs
+app.register_blueprint(obs)
 
 STORES = [
     {

@@ -64,5 +64,10 @@
         });
 
 
+        window.restoreObsState = values => {
+            if ('valet-power' in values) state.power = Number(String(values['valet-power']).replace(/[^0-9.e+]/gi, ''));
+            if ('etb-count' in values) state.etbs = Number(String(values['etb-count']).replace(/[^0-9.e+]/gi, ''));
+            updateDisplay();
+        };
     </script>
 {% endblock %}

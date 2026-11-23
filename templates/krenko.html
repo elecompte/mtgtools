@@ -68,5 +68,10 @@
         });
 
 
+        window.restoreObsState = values => {
+            if ('goblins-count' in values) state.goblins = Number(String(values['goblins-count']).replace(/[^0-9.e+]/gi, ''));
+            if ('krenkos-count' in values) state.krenkos = Number(String(values['krenkos-count']).replace(/[^0-9.e+]/gi, ''));
+            updateDisplay();
+        };
     </script>
 {% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}OBS {{ 'controls' if control else 'display' }}{% endblock %}
+{% block page %}{{ 'obs-control' if control else 'obs-display' }}{% endblock %}
+{% block content %}
+{% if control %}
+<main class="library">
+  <h1>OBS controls</h1>
+  <p>Paste the display URL into an OBS Browser Source. Choose a card below to put it on screen.</p>
+  <label for="display-url">Display URL</label>
+  <div class="obs-url"><input id="display-url" readonly><button id="copy-url">Copy URL</button></div>
+  <details><summary>Control from another device</summary><label for="control-url">Private controller URL</label><input id="control-url" readonly onclick="this.select()"><small>Open this link on your phone or computer to control the same display.</small></details>
+  <label for="card">On screen</label>
+  <select id="card">{% for slug, name in cards.items() %}<option value="{{ slug }}">{{ name }}</option>{% endfor %}</select>
+  <small id="sync" role="status"></small>
+{% endif %}
+<iframe id="card-frame" title="Active tabletop card"></iframe>
+{% if control %}</main>{% endif %}
+<script src="/static/js/obs.js" defer></script>
+{% endblock %}
