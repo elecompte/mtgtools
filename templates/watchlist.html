@@ -1,20 +1,55 @@
 {% extends "base.html" %}
 {% block title %}Portals watchlist{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/watchlist.css">{% endblock %}
+{% block nav %}<a href="/import">Search Portals ↗</a>{% endblock %}
 {% block content %}
-<main class="portal">
-<h1>Watchlist</h1>
-<p>Inventory is checked every six hours across all stores. New cards are checked within five minutes. Times below are UTC.</p>
-<form method="post"><label for="watch-name">Card name</label> <input id="watch-name" name="names" required maxlength="200"> <button>Add to watchlist</button></form>
+<main class="portal watchlist">
+<header class="watch-header">
+<div><p class="watch-eyebrow">Portals inventory</p><h1>Your watchlist</h1>
+<p>Checked every six hours. New cards are checked within five minutes.</p></div>
+<img src="/static/img/portals.png" alt="">
+</header>
+<form method="post" class="watch-add">
+<label for="watch-name">Watch a card</label>
+<div><input id="watch-name" name="names" required maxlength="200" placeholder="Enter a card name" autocomplete="off"><button>Add card</button></div>
+</form>
+{% if watches %}
+<div class="watch-toolbar">
+<label for="watch-filter">Show</label>
+<select id="watch-filter"><option value="all">All cards ({{ watches|length }})</option><option value="available">Available</option><option value="unavailable">Unavailable</option><option value="pending">Waiting for check</option><option value="error">Check failed</option></select>
+<span id="watch-count" role="status"></span>
+</div>
+<div class="watch-items">
 {% for watch in watches %}
-<section class="store-results">
-<h2>{{ watch.name }}</h2>
-<p>{{ watch.error or ('Available' if watch.results else ('Unavailable' if watch.checked else 'Waiting for first check')) }}</p>
-{% if watch.checked %}<small>Last successful check {{ watch.checked }} UTC</small>{% endif %}
-{% for card in watch.results %}
-<p><a href="{{ card.url }}" target="_blank" rel="noopener">{{ card.store }} · {{ card.name }} · {{ card.set }}</a>{% if card.price is not none %} · {{ card.price }}{% endif %}</p>
+{% set state = 'error' if watch.error else ('available' if watch.results else ('unavailable' if watch.checked else 'pending')) %}
+<article class="watch-item" data-state="{{ state }}">
+<div class="watch-item-header">
+<div><h2>{{ watch.name }}</h2><span class="watch-status {{ state }}">{{ {'available':'Available','unavailable':'Unavailable','pending':'Waiting for first check','error':'Check failed'}[state] }}</span></div>
+<form method="post"><button class="watch-remove" name="remove" value="{{ watch.name }}" aria-label="Remove {{ watch.name }} from watchlist">Remove</button></form>
+</div>
+{% if watch.error %}<p class="watch-error">{{ watch.error }}</p>{% endif %}
+{% if watch.checked %}<p class="watch-checked">Last successful check <time datetime="{{ watch.checked|replace(' ', 'T') }}Z">{{ watch.checked }} UTC</time></p>{% endif %}
+{% if watch.results %}
+<div class="watch-listings">
+{% for store, listings in watch.results|groupby('store') %}
+<section><h3>{{ store }}</h3>
+{% for card in listings|unique(attribute='url') %}
+<a href="{{ card.url }}" target="_blank" rel="noopener" class="watch-listing">
+<div><strong>{{ card.name }}</strong><small>{{ card.set or 'Set unavailable' }}</small></div>
+<span>{% if card.price is not none %}{{ '$%.2f'|format(card.price|float) }}{% else %}View price{% endif %} ↗</span>
+</a>
+{% endfor %}</section>
 {% endfor %}
-<form method="post"><button name="remove" value="{{ watch.name }}">Remove</button></form>
-</section>
-{% else %}<p>Your watchlist is empty.</p>{% endfor %}
+</div>
+{% elif state == 'unavailable' %}<p class="watch-hint">No stock found at the last check.</p>
+{% elif state == 'pending' %}<p class="watch-hint">Your card is queued. Check back shortly.</p>{% endif %}
+</article>
+{% endfor %}
+</div>
+<p id="watch-empty-filter" hidden>No cards match this filter.</p>
+{% else %}
+<div class="watch-empty"><h2>Keep an eye on your next card</h2><p>Add a card above, or search Portals and add unavailable cards from your results.</p><a href="/import">Search Portals →</a></div>
+{% endif %}
 </main>
+<script src="/static/js/watchlist.js" defer></script>
 {% endblock %}

@@ -1,0 +1,36 @@
+.watch-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.watch-header h1 { margin: 0; }
+.watch-header p { color: var(--muted); }
+.watch-header img { width: 100px; height: auto; }
+.watch-eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .8rem; }
+.watch-add { margin: 22px 0; padding: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.watch-add label { display: block; margin-bottom: 10px; }
+.watch-add > div { display: flex; gap: 10px; }
+.watch-add input { flex: 1; }
+.watch-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 26px 0 16px; }
+.watch-toolbar select { font: inherit; background: var(--panel); color: var(--ink); padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+.watch-toolbar span { color: var(--muted); font-size: .9rem; }
+.watch-item { border-top: 1px solid var(--line); padding: 22px 0; }
+.watch-item-header { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+.watch-item h2 { margin: 0 0 10px; font-size: 1.45rem; overflow-wrap: anywhere; }
+.watch-item h3 { margin: 14px 0 6px; font-size: 1rem; }
+.watch-status { display: inline-block; border-radius: 20px; padding: 4px 12px; font-size: .85rem; background: #293b39; color: #d1dcd6; }
+.watch-status.available { background: #1b4935; color: #b4efcd; }
+.watch-status.error { background: #573421; color: #ffdab2; }
+.watch-status.pending { background: #273c50; color: #b9defc; }
+.watchlist .watch-remove { color: var(--muted); background: transparent; border: 1px solid var(--line); font-size: .85rem; min-height: 44px; }
+.watch-checked, .watch-hint { color: var(--muted); font-size: .9rem; }
+.watch-error { color: #ffdab2; }
+.watch-listing { display: flex; justify-content: space-between; align-items: center; gap: 20px; background: var(--panel); color: var(--ink); padding: 12px 16px; border-radius: 8px; margin: 6px 0; text-decoration: none; }
+.watch-listing:hover { background: #293c36; }
+.watch-listing strong { font-weight: 550; overflow-wrap: anywhere; }
+.watch-listing > span { white-space: nowrap; color: var(--accent); }
+.watch-empty { border-top: 1px solid var(--line); padding: 25px 0; }
+.watch-empty a { color: var(--accent); }
+.watch-item[hidden] { display: none; }
+@media(max-width: 600px) {
+  .watch-header img { width: 58px; }
+  .watch-add > div { flex-direction: column; }
+  .watch-add button { width: 100%; }
+  .watch-listing { gap: 12px; padding: 12px; }
+}
