@@ -1,0 +1,39 @@
+body.portals-theme {
+  --ink: #f5f0fc;
+  --muted: #c2b7cf;
+  --line: #493956;
+  --accent: #c6a0ed;
+  --panel: #261d30;
+  background: #17111e;
+}
+.portals-theme :focus-visible { outline-color: #d8b8ff; }
+.portals-theme nav a:hover, .portals-theme .watch-empty a,
+.portals-theme #match-store-link { color: #dcc0ff; }
+.portals-theme input:not([type=checkbox]), .portals-theme textarea {
+  background: #1b1423;
+  color: var(--ink);
+  border-color: #665173;
+}
+.portals-theme input::placeholder, .portals-theme textarea::placeholder { color: #ad9cbd; }
+.portals-theme .portal button {
+  background: var(--accent);
+  color: #24132f;
+  border-color: #9771bd;
+}
+.portals-theme .portal button:hover:not(:disabled) { filter: brightness(1.08); }
+.portals-theme .watch-toolbar select { background: var(--panel); border-color: var(--line); }
+.portals-theme .watch-add { background: var(--panel); border-color: var(--line); }
+.portals-theme .watch-item .watch-remove,
+.portals-theme .watch-item .watch-check-one {
+  background: #22192d;
+  color: #e5cffb;
+  border-color: #735689;
+}
+.portals-theme .watchlist .store-filters button { background: var(--panel); color: var(--ink); border-color: var(--line); }
+.portals-theme .watchlist .store-filters button[aria-pressed="true"] { background: var(--accent); color: #24132f; }
+.portals-theme .watch-heading .watch-checked { color: var(--muted); }
+.portals-theme #match-dialog { background: var(--panel); border-color: var(--line); }
+.portals-theme #match-dialog button { background: #40304e; color: var(--ink); border-color: #715787; }
+.portals-theme #match-price { color: var(--accent); }
+.portals-theme .watch-eyebrow { color: #c6a0ed; }
+.portals-theme #loadingOverlay { background: #17111ef2; }
