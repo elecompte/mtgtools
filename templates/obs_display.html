@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MTG Tools · OBS display</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    svg { display: block; width: 100%; height: 100%; font-family: system-ui, sans-serif; fill: #fff; font-weight: 750; }
+    .label { fill: #e9d9b8; font-weight: 650; }
+    .number { font-variant-numeric: tabular-nums; }
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" preserveAspectRatio="xMinYMin meet" role="img" aria-labelledby="card-name">
+  <defs><clipPath id="edge"><rect width="600" height="400" rx="20"/></clipPath></defs>
+  <g clip-path="url(#edge)">
+    <rect width="600" height="400" fill="#101919"/>
+    <image id="art" width="600" height="400" preserveAspectRatio="xMidYMid slice" opacity=".16"/>
+    <rect width="8" height="400" fill="#edc780"/>
+  </g>
+  <text id="card-name" x="30" y="64" font-size="49"></text>
+  <g id="result">
+    <text id="metric" class="label" x="30" y="125" font-size="34"></text>
+    <text id="total" class="number" x="30" y="282" font-size="154"></text>
+    <g id="details"></g>
+  </g>
+  <g id="pool" hidden></g>
+</svg>
+<script src="/static/js/obs-display.js"></script>
+</body>
+</html>

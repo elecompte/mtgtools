@@ -107,17 +107,6 @@
     select.onchange = () => { snapshot(); choose(); };
     choose();
     setInterval(snapshot, 250);
-  } else {
-    async function poll() {
-      try {
-        const r = await fetch(endpoint, {cache:'no-store'});
-        if (r.ok) {
-          const state = await r.json();
-          if (state) show(state.card, state.values);
-        }
-      } finally { setTimeout(() => poll().catch(() => {}), 400); }
-    }
-    await poll();
   }
 })().catch(() => {
   const status = document.querySelector('#sync');

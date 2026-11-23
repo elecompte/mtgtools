@@ -14,7 +14,9 @@ CARDS = {"valet": "Devilish Valet", "krenko": "Krenko", "animpakal": "Anim Pakal
 @obs.get("/obs")
 @obs.get("/obs/control")
 def obs_page():
-    return render_template("obs.html", control=request.path.endswith("/control"), cards=CARDS)
+    if request.path == "/obs":
+        return render_template("obs_display.html")
+    return render_template("obs.html", control=True, cards=CARDS)
 
 
 @obs.route("/obs/state", methods=["GET", "PUT"])
