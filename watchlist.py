@@ -124,18 +124,39 @@ if __name__ == "__main__":
 @watchlist.get("/watchlist/card")
 def card_details():
     from app import requests, SCRYFALL_HEADERS
+    import re
     name = request.args.get("name", "").strip()
-    if not name or len(name) > 200:
-        return jsonify(error="A card name is required."), 400
-    try:
-        response = requests.get(
-            "https://api.scryfall.com/cards/named",
-            params={"exact": name},
-            headers=SCRYFALL_HEADERS,
-            timeout=10,
-        )
+    set_name = request.args.get("set", "").strip()
+    product_id = request.args.get("product_id", "")
+    if not name or len(name) > 200 or len(set_name) > 200:
+        return jsonify(error="A valid card name and set are required."), 400
+
+    def fetch(url, params=None):
+        response = requests.get(url, params=params, headers=SCRYFALL_HEADERS, timeout=10)
+        if response.status_code == 404:
+            return None
         response.raise_for_status()
-        card = response.json()
+        return response.json()
+
+    try:
+        card = None
+        if product_id.isdigit():
+            candidate = fetch("https://api.scryfall.com/cards/tcgplayer/" + product_id)
+            if candidate:
+                card = candidate
+        if card is None and set_name:
+            # Set-qualified lookup supports older saved listings without product IDs.
+            base_name = re.sub(r"\s*\([^)]*\)\s*$", "", name)
+            quote = lambda value: value.replace("\\", "\\\\").replace('"', '\\"')
+            data = fetch("https://api.scryfall.com/cards/search", {
+                "q": '!"' + quote(base_name) + '" set:"' + quote(set_name) + '"',
+                "unique": "prints",
+            })
+            candidates = (data or {}).get("data", [])
+            if len(candidates) == 1 and not data.get("has_more"):
+                card = candidates[0]
+        if card is None:
+            return jsonify(error="The exact printing could not be identified. View the store listing for its image."), 404
         faces = card.get("card_faces") or [card]
         return jsonify(
             oracle_text=card.get("oracle_text") or "\n\n".join(
@@ -146,3 +167,18 @@ def card_details():
         )
     except (requests.RequestException, ValueError, KeyError):
         return jsonify(error="Card details could not be loaded. Try again shortly."), 502
+
+
+@watchlist.get("/watchlist/symbols")
+def card_symbols():
+    from app import requests, SCRYFALL_HEADERS
+    try:
+        response = requests.get("https://api.scryfall.com/symbology", headers=SCRYFALL_HEADERS, timeout=10)
+        response.raise_for_status()
+        symbols = {item["symbol"]: {"url": item["svg_uri"], "label": item["english"]}
+                   for item in response.json()["data"]}
+        result = jsonify(symbols)
+        result.cache_control.max_age = 86400
+        return result
+    except (requests.RequestException, ValueError, KeyError):
+        return jsonify(error="Symbols unavailable"), 502

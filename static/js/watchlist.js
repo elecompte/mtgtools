@@ -56,15 +56,23 @@ async function loadDetails(card) {
   field('match-retry').hidden = true;
   field('match-status').textContent = 'Loading card details…';
   try {
-    let data = detailCache.get(card.name);
+    const productId = card.product_id || new URL(card.url).pathname.split('/').filter(Boolean).pop();
+    const identity = JSON.stringify([card.name, card.set, productId]);
+    let data = detailCache.get(identity);
     if (!data) {
-      const response = await fetch('/watchlist/card?' + new URLSearchParams({name: card.name}), {signal: request.signal});
+      const response = await fetch('/watchlist/card?' + new URLSearchParams({name: card.name, set: card.set || '', product_id: productId || ''}), {signal: request.signal});
       data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      detailCache.set(card.name, data);
+      detailCache.set(identity, data);
     }
     if (request.signal.aborted) return;
-    field('match-oracle').textContent = data.oracle_text || 'No oracle text for this card.';
+    const oracle = data.oracle_text || 'No oracle text for this card.';
+    renderOracle(oracle, {});
+    try {
+      const symbols = await getSymbols();
+      if (!request.signal.aborted) renderOracle(oracle, symbols);
+    } catch { /* Keep readable symbol codes if the symbol service is unavailable. */ }
+    if (request.signal.aborted) return;
     if (data.image) {
       field('match-image').src = data.image;
       field('match-image').alt = card.name;
@@ -100,3 +108,32 @@ field('match-image').addEventListener('error', () => {
   field('match-image').hidden = true;
   field('match-image-set').textContent = 'Card image unavailable';
 });
+
+
+let symbolRequest;
+function getSymbols() {
+  if (!symbolRequest) {
+    symbolRequest = fetch('/watchlist/symbols').then(response => {
+      if (!response.ok) throw new Error();
+      return response.json();
+    }).catch(error => { symbolRequest = null; throw error; });
+  }
+  return symbolRequest;
+}
+function renderOracle(text, symbols) {
+  const oracle = field('match-oracle');
+  oracle.replaceChildren();
+  for (const part of text.split(/(\{[^{}]+\})/g)) {
+    const symbol = symbols[part];
+    if (!symbol) {
+      oracle.append(document.createTextNode(part));
+      continue;
+    }
+    const image = document.createElement('img');
+    image.className = 'oracle-symbol';
+    image.src = symbol.url;
+    image.alt = part;
+    image.title = symbol.label;
+    oracle.append(image);
+  }
+}

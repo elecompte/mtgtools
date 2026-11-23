@@ -108,6 +108,7 @@ def lookup_card_at_store(card_name, store, strict=False):
             for item in products:
                 results.append({
                     "name": item.get("name"),
+                    "product_id": item.get("id"),
                     "url": f'{store["baseUrl"]}/catalog/magic/{item.get("setUrlName")}/{item.get("productUrlName")}/{item.get("id")}',
                     # Catalog search defaults to in-stock listings. Its items may
                     # omit quantities entirely, as in Easton's Peek response.

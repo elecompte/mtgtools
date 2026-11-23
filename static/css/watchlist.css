@@ -55,3 +55,11 @@
   #match-image { width: min(100%, 260px); display: block; margin: auto; }
   #match-image[hidden] { display: none; }
 }
+
+#match-dialog { background: #1b2726; color-scheme: dark; box-shadow: 0 16px 60px #0008; isolation: isolate; }
+#match-dialog::backdrop { background: rgba(0, 0, 0, .75); }
+#match-dialog [hidden] { display: none !important; }
+.match-content > div { min-width: 0; background: transparent; }
+#match-image { display: block; height: auto; background: transparent; }
+#match-close { background: transparent !important; border: 0 !important; }
+#match-oracle .oracle-symbol { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -.18em; margin: 0 .05em; }
