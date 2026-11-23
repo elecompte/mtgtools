@@ -1,63 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Portals Lookup Results{% endblock %}
+{% block title %}Portals lookup results{% endblock %}
 {% block page %}portal-page{% endblock %}
-{% block nav %}<a href="/import">Card lookup</a>{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/watchlist.css">{% endblock %}
+{% block nav %}<a href="/import">New search</a><a href="/watchlist">Watchlist</a>{% endblock %}
 {% block content %}
-
-    <main class="portal">
-        <div class="section">
-            <div class="input-group">
-                <h1>Lookup results</h1>
+<main class="portal watchlist">
+<h1>Lookup results</h1>
+<div class="store-filters" role="group" aria-label="Filter results by store">
+<button type="button" data-store="all" aria-pressed="true">All stores</button>
+{% for store in results_by_store %}<button type="button" data-store="{{ store }}" aria-pressed="false">{{ store }}</button>{% endfor %}
+<button type="button" data-store="unavailable" aria-pressed="false">Unavailable</button>
+</div>
+<p id="result-count" role="status"></p>
 {% if unavailable %}
-<form action="/watchlist" method="post">
+<form action="/watchlist" method="post" class="result-watch-form">
 {% for name in unavailable %}<input type="hidden" name="names" value="{{ name }}">{% endfor %}
-<button>Add unavailable to watchlist</button>
-<p>{{ unavailable|join(', ') }}</p>
+<button>Add unavailable to watchlist</button><span role="status"></span>
 </form>
 {% endif %}
-                {% if scryfall_meta and scryfall_meta.next_count %}
-                <div class="scryfall-next">
-                    <button type="button" id="scryfallNextButton" class="scryfall-button" data-query="{{ scryfall_meta.query }}" data-cursor='{{ scryfall_meta.cursor|tojson|safe }}'>
-                        Search next {{ scryfall_meta.next_count }}
-                    </button>
-                    <div id="scryfallNextStatus" class="status-text"></div>
-                </div>
-                {% endif %}
-                {% for store, results in results_by_store.items() %}
-                <div class="store-results">
-                    <h2 class="storename">{{ store }}</h2>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Set</th>
-                                    <th>Price</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            {% for card in results %}
-                                <tr>
-                                    <td><a href="{{ card.url }}" target="_blank">{{ card.name }}</a></td>
-                                    <td>{% if card.set is not none %}{{ card.set }}{% else %}-{% endif %}</td>
-                                    <td>{% if card.price is not none %}${{ '%.2f'|format(card.price|float) }}{% else %}-{% endif %}</td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% if not results %}
-                        <div class="no-results">No results for this store.</div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </main>
-    <div id="loadingOverlay">
-        <div class="loader"></div>
-        <div role="status" class="loading-text">Loading, please wait...</div>
-    </div>
+<div class="watch-items">
+{% for item in searched_cards %}
+<article class="watch-item lookup-result" data-state="{{ 'available' if item.matches else 'unavailable' }}" data-all-matches='{{ item.matches|tojson }}'
+{% if item.matches %}data-matches='{{ item.matches|tojson }}' tabindex="0" role="group" aria-haspopup="dialog" aria-controls="match-dialog" aria-label="View matches for {{ item.name }}"{% endif %}>
+<div class="watch-item-header">
+<div><div class="watch-heading"><h2>{{ item.name }}</h2>{% if item.set %}<small>{{ item.set }}</small>{% endif %}<span class="watch-state-text">{{ 'Available' if item.matches else 'Unavailable' }}</span></div>
+{% if item.matches %}<small>{{ item.matches|map(attribute='store')|unique|join(' · ') }}</small>{% endif %}</div>
+{% if not item.matches %}
+<form action="/watchlist" method="post" class="watch-actions result-watch-form">
+<input type="hidden" name="names" value="{{ item.name }}">
+<button>Watchlist</button><span role="status"></span>
+</form>
+{% endif %}
+</div></article>
+{% else %}<p>No cards were searched.</p>{% endfor %}
+</div>
+<p id="result-empty" hidden>No cards match this filter.</p>
+{% if scryfall_meta and scryfall_meta.next_count %}
+<div class="scryfall-next">
+<button type="button" id="scryfallNextButton" data-query="{{ scryfall_meta.query }}" data-cursor='{{ scryfall_meta.cursor|tojson }}'>Search next {{ scryfall_meta.next_count }}</button>
+<div id="scryfallNextStatus" role="status"></div>
+</div>
+{% endif %}
+</main>
+{% include "card_dialog.html" %}
+<div id="loadingOverlay"><div role="status" class="loading-text">Searching for cards…</div></div>
+<script src="/static/js/watchlist.js?v=swipe-dismiss-5" defer></script>
+<script src="/static/js/lookup-results.js" defer></script>
     <script>
     var nextButton = document.getElementById('scryfallNextButton');
     if (nextButton) {

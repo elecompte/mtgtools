@@ -126,3 +126,12 @@
   .watch-item-header > div { flex: 1 1 140px; }
   .watch-actions button { padding: 6px 10px; }
 }
+
+.store-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.watchlist .store-filters button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 22px; padding: 8px 14px; }
+.watchlist .store-filters button[aria-pressed="true"] { background: var(--accent); color: #241f16; }
+.result-watch-form { margin-bottom: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.watch-actions.result-watch-form { margin-bottom: 0; }
+.result-watch-form [role="status"] { font-size: .85rem; color: var(--muted); }
+#result-count { color: var(--muted); font-size: .9rem; }
+.scryfall-next { margin-top: 20px; }

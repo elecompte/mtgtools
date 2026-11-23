@@ -170,12 +170,14 @@ def run_import_job(job_id, limited_entries):
     results_by_store = {store['storeName']: [] for store in STORES}
     all_results = []
     unavailable = []
+    searched_cards = []
     current = 0
     for entry in limited_entries:
         name = entry["name"]
         set_name = entry.get("set")
         exact = entry.get("exact", False)
         corrected = None
+        matches = []
         for store in STORES:
             store_results = lookup_card_at_store(name, store)
             if not store_results:
@@ -192,9 +194,10 @@ def run_import_job(job_id, limited_entries):
             if store_results:
                 results_by_store[store['storeName']].extend(store_results)
                 all_results.extend(store_results)
-                break
-        else:
+                matches.extend(store_results)
+        if not matches:
             unavailable.append(name)
+        searched_cards.append({"name": name, "set": set_name, "matches": list({r["url"]: r for r in matches}.values())})
         current += 1
         with JOB_LOCK:
             job = IMPORT_JOBS.get(job_id)
@@ -203,6 +206,7 @@ def run_import_job(job_id, limited_entries):
     with JOB_LOCK:
         job = IMPORT_JOBS.get(job_id)
         if job:
+            job["searched_cards"] = searched_cards
             job["unavailable"] = unavailable
             job["status"] = "done"
             job["results_by_store"] = results_by_store
@@ -400,6 +404,7 @@ def import_job_results(job_id):
         card_names=card_names,
         scryfall_meta=scryfall_meta,
         unavailable=job.get("unavailable", []),
+        searched_cards=job.get("searched_cards", []),
     )
 
 @app.route('/import', methods=['GET', 'POST'])
@@ -418,24 +423,12 @@ def import_cards():
         card_names = [line.strip() for line in content.splitlines() if line.strip()]
     else:
         return render_template('import.html', error="No file uploaded")
-    limited_names = [entry["name"] for entry in normalize_card_entries(card_names)][:50]
-    results_by_store = {store['storeName']: [] for store in STORES}
-    all_results = []
-    for name in limited_names:
-        corrected = None
-        for store in STORES:
-            store_results = lookup_card_at_store(name, store)
-            if not store_results:
-                if corrected is None:
-                    corrected = resolve_card_name(name)
-                if corrected and corrected.lower() != name.lower():
-                    store_results = lookup_card_at_store(corrected, store)
-            if store_results:
-                results_by_store[store['storeName']].extend(store_results)
-                all_results.extend(store_results)
-                break
-    # Always render results page, never send CSV
-    return render_template('import_results.html', results_by_store=results_by_store, all_results=all_results, card_names=limited_names)
+    entries = normalize_card_entries(card_names)[:50]
+    job_id = uuid.uuid4().hex
+    with JOB_LOCK:
+        IMPORT_JOBS[job_id] = {"status": "running", "current": 0, "total": len(entries)}
+    run_import_job(job_id, entries)
+    return import_job_results(job_id)
 
 @app.get('/service-worker.js')
 def service_worker():
