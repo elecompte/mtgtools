@@ -7,5 +7,17 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    volumes:
+      - watchlist-data:/data
     ports:
       - 5002:5002
+  watchlist:
+    image: mtgtools:latest
+    restart: always
+    command: ["python", "watchlist.py"]
+    volumes:
+      - watchlist-data:/data
+    depends_on:
+      - mtgtools
+volumes:
+  watchlist-data:

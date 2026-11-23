@@ -18,6 +18,7 @@ RUN python -m pip install -r requirements.txt
 # Create the runtime user before copying the application so Docker can assign
 # ownership while copying instead of walking the entire build context later.
 RUN adduser -u 5678 --disabled-password --gecos "" appuser
+RUN mkdir /data && chown appuser:appuser /data
 COPY --chown=appuser:appuser . .
 USER appuser
 

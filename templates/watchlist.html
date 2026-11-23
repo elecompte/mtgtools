@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Portals watchlist{% endblock %}
+{% block content %}
+<main class="portal">
+<h1>Watchlist</h1>
+<p>Inventory is checked every six hours across all stores. New cards are checked within five minutes. Times below are UTC.</p>
+<form method="post"><label for="watch-name">Card name</label> <input id="watch-name" name="names" required maxlength="200"> <button>Add to watchlist</button></form>
+{% for watch in watches %}
+<section class="store-results">
+<h2>{{ watch.name }}</h2>
+<p>{{ watch.error or ('Available' if watch.results else ('Unavailable' if watch.checked else 'Waiting for first check')) }}</p>
+{% if watch.checked %}<small>Last successful check {{ watch.checked }} UTC</small>{% endif %}
+{% for card in watch.results %}
+<p><a href="{{ card.url }}" target="_blank" rel="noopener">{{ card.store }} · {{ card.name }} · {{ card.set }}</a>{% if card.price is not none %} · {{ card.price }}{% endif %}</p>
+{% endfor %}
+<form method="post"><button name="remove" value="{{ watch.name }}">Remove</button></form>
+</section>
+{% else %}<p>Your watchlist is empty.</p>{% endfor %}
+</main>
+{% endblock %}

@@ -8,6 +8,13 @@
         <div class="section">
             <div class="input-group">
                 <h1>Lookup results</h1>
+{% if unavailable %}
+<form action="/watchlist" method="post">
+{% for name in unavailable %}<input type="hidden" name="names" value="{{ name }}">{% endfor %}
+<button>Add unavailable to watchlist</button>
+<p>{{ unavailable|join(', ') }}</p>
+</form>
+{% endif %}
                 {% if scryfall_meta and scryfall_meta.next_count %}
                 <div class="scryfall-next">
                     <button type="button" id="scryfallNextButton" class="scryfall-button" data-query="{{ scryfall_meta.query }}" data-cursor='{{ scryfall_meta.cursor|tojson|safe }}'>

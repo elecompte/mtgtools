@@ -10,6 +10,8 @@ import requests
 
 
 app = Flask(__name__)
+from watchlist import watchlist
+app.register_blueprint(watchlist)
 from obs import obs
 app.register_blueprint(obs)
 
@@ -74,7 +76,7 @@ def resolve_card_name(card_name: str):
         pass
     return None
 
-def lookup_card_at_store(card_name, store):
+def lookup_card_at_store(card_name, store, strict=False):
     headers = HEADERS.copy()
     headers["origin"] = store["baseUrl"]
     headers["referer"] = f'{store["baseUrl"]}/search/products?productName={card_name}&productLineName=Magic:+The+Gathering'
@@ -103,6 +105,8 @@ def lookup_card_at_store(card_name, store):
                 })
             return results
         except Exception:
+            if strict:
+                raise
             return []
     # Try base, Extended Art, Borderless
     all_results = []
@@ -146,6 +150,7 @@ def normalize_card_entries(card_entries):
 def run_import_job(job_id, limited_entries):
     results_by_store = {store['storeName']: [] for store in STORES}
     all_results = []
+    unavailable = []
     current = 0
     for entry in limited_entries:
         name = entry["name"]
@@ -159,6 +164,7 @@ def run_import_job(job_id, limited_entries):
                     corrected = resolve_card_name(name)
                 if corrected and corrected.lower() != name.lower():
                     store_results = lookup_card_at_store(corrected, store)
+            store_results = [r for r in store_results if float(r.get("inStock") or 0) > 0]
             if store_results and set_name:
                 store_results = [
                     result for result in store_results
@@ -168,6 +174,8 @@ def run_import_job(job_id, limited_entries):
                 results_by_store[store['storeName']].extend(store_results)
                 all_results.extend(store_results)
                 break
+        else:
+            unavailable.append(name)
         current += 1
         with JOB_LOCK:
             job = IMPORT_JOBS.get(job_id)
@@ -176,6 +184,7 @@ def run_import_job(job_id, limited_entries):
     with JOB_LOCK:
         job = IMPORT_JOBS.get(job_id)
         if job:
+            job["unavailable"] = unavailable
             job["status"] = "done"
             job["results_by_store"] = results_by_store
             job["all_results"] = all_results
@@ -371,6 +380,7 @@ def import_job_results(job_id):
         all_results=all_results,
         card_names=card_names,
         scryfall_meta=scryfall_meta,
+        unavailable=job.get("unavailable", []),
     )
 
 @app.route('/import', methods=['GET', 'POST'])
