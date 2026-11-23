@@ -1,11 +1,14 @@
 """Persistent inventory watches and six-hour inventory polling."""
 import json
+import hashlib
+import io
+from urllib.parse import urlsplit
 import logging
 import os
 import sqlite3
 import time
 import uuid
-from flask import Blueprint, redirect, render_template, request, jsonify
+from flask import Blueprint, redirect, render_template, request, jsonify, send_file, url_for, abort
 
 watchlist = Blueprint("watchlist", __name__)
 
@@ -15,6 +18,7 @@ def connect():
     db.row_factory = sqlite3.Row
     db.execute("CREATE TABLE IF NOT EXISTS watches (name TEXT PRIMARY KEY COLLATE NOCASE, checked TEXT, results TEXT DEFAULT '[]', error TEXT)")
     db.execute("CREATE TABLE IF NOT EXISTS watch_checks (name TEXT PRIMARY KEY COLLATE NOCASE, request_id TEXT NOT NULL)")
+    db.execute("CREATE TABLE IF NOT EXISTS card_media (id TEXT PRIMARY KEY, url TEXT NOT NULL, data BLOB, mime TEXT)")
     return db
 
 
@@ -162,7 +166,7 @@ def card_details():
             oracle_text=card.get("oracle_text") or "\n\n".join(
                 face.get("name", "") + "\n" + face.get("oracle_text", "") for face in faces
             ),
-            image=(card.get("image_uris") or faces[0].get("image_uris") or {}).get("normal"),
+            image=media_url((card.get("image_uris") or faces[0].get("image_uris") or {}).get("normal")),
             image_set=card.get("set_name"),
         )
     except (requests.RequestException, ValueError, KeyError):
@@ -175,10 +179,59 @@ def card_symbols():
     try:
         response = requests.get("https://api.scryfall.com/symbology", headers=SCRYFALL_HEADERS, timeout=10)
         response.raise_for_status()
-        symbols = {item["symbol"]: {"url": item["svg_uri"], "label": item["english"]}
+        symbols = {item["symbol"]: {"url": media_url(item["svg_uri"]), "label": item["english"]}
                    for item in response.json()["data"]}
         result = jsonify(symbols)
         result.cache_control.max_age = 86400
         return result
     except (requests.RequestException, ValueError, KeyError):
         return jsonify(error="Symbols unavailable"), 502
+
+
+
+def media_url(source):
+    if not source:
+        return None
+    parsed = urlsplit(source)
+    if parsed.scheme != "https" or parsed.hostname not in {"cards.scryfall.io", "svgs.scryfall.io"}:
+        raise ValueError("Unexpected card media host")
+    key = hashlib.sha256(source.encode()).hexdigest()
+    with connect() as db:
+        db.execute("INSERT OR IGNORE INTO card_media(id, url) VALUES (?, ?)", (key, source))
+    return url_for("watchlist.cached_media", key=key)
+
+
+@watchlist.get("/watchlist/media/<key>")
+def cached_media(key):
+    from app import requests, SCRYFALL_HEADERS
+    with connect() as db:
+        item = db.execute("SELECT * FROM card_media WHERE id=?", (key,)).fetchone()
+    if item is None:
+        abort(404)
+    data, mime = item["data"], item["mime"]
+    if data is None:
+        try:
+            with requests.get(item["url"], headers=SCRYFALL_HEADERS, timeout=15,
+                              stream=True, allow_redirects=False) as response:
+                response.raise_for_status()
+                mime = response.headers.get("Content-Type", "").split(";")[0].strip()
+                if mime not in {"image/jpeg", "image/png", "image/webp", "image/svg+xml"}:
+                    raise ValueError("Unexpected image format")
+                chunks = []
+                size = 0
+                for chunk in response.iter_content(65536):
+                    size += len(chunk)
+                    if size > 10 * 1024 * 1024:
+                        raise ValueError("Image too large")
+                    chunks.append(chunk)
+                data = b"".join(chunks)
+                if not data:
+                    raise ValueError("Empty image")
+            with connect() as db:
+                db.execute("UPDATE card_media SET data=?, mime=? WHERE id=?", (data, mime, key))
+        except (requests.RequestException, ValueError):
+            return jsonify(error="Card image could not be loaded. Try again shortly."), 502
+    result = send_file(io.BytesIO(data), mimetype=mime, etag=key,
+                       conditional=True, max_age=86400)
+    result.headers["X-Content-Type-Options"] = "nosniff"
+    return result
