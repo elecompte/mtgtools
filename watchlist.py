@@ -1,5 +1,6 @@
 """Persistent inventory watches and six-hour inventory polling."""
 import json
+import logging
 import os
 import sqlite3
 import time
@@ -60,21 +61,46 @@ def check():
             ORDER BY q.name IS NULL, w.name"""))
     for row in names:
         name = row["name"]
-        try:
-            results = []
-            for store in STORES:
-                for result in lookup_card_at_store(name, store, strict=True):
+        results = []
+        failures = []
+        failed_stores = set()
+        for store in STORES:
+            try:
+                listings = lookup_card_at_store(name, store, strict=True)
+                for result in listings:
                     if float(result.get("inStock") or 0) > 0:
                         results.append(result)
-            error = None
-        except Exception:
-            error = "Inventory check failed. Previous availability is shown."
+            except Exception as exc:
+                import requests
+                if isinstance(exc, requests.HTTPError):
+                    reason = f"HTTP {exc.response.status_code}"
+                    if exc.response.status_code == 403:
+                        reason += " · store API refused access"
+                    elif exc.response.status_code == 429:
+                        reason += " · store API rate limit"
+                elif isinstance(exc, requests.Timeout):
+                    reason = "request timed out"
+                elif isinstance(exc, requests.ConnectionError):
+                    reason = "connection failed"
+                else:
+                    reason = f"unexpected response ({type(exc).__name__})"
+                failures.append(f"{store['storeName']}: {reason}")
+                failed_stores.add(store["storeName"])
+                logging.warning("Watchlist %r, %s: %s", name, store["storeName"], reason)
+        error = "; ".join(failures) or None
         with connect() as db:
-            if error:
-                db.execute("UPDATE watches SET error=? WHERE name=?", (error, name))
-            else:
+            old = db.execute("SELECT results FROM watches WHERE name=?", (name,)).fetchone()
+            if old and failed_stores:
+                results.extend(
+                    item for item in json.loads(old["results"])
+                    if item.get("store") in failed_stores
+                )
+            if not failed_stores:
                 db.execute("UPDATE watches SET checked=?, results=?, error=NULL WHERE name=?",
                            (datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), json.dumps(results), name))
+            else:
+                db.execute("UPDATE watches SET results=?, error=? WHERE name=?",
+                           (json.dumps(results), error, name))
             if row["request_id"]:
                 db.execute("DELETE FROM watch_checks WHERE name=? AND request_id=?", (name, row["request_id"]))
         time.sleep(1)

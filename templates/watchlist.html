@@ -31,7 +31,7 @@
 <div><h2>{{ watch.name }}</h2><span class="watch-status {{ state }}">{{ {'available':'Available','unavailable':'Unavailable','pending':'Waiting for first check','error':'Check failed'}[state] }}</span></div>
 <form method="post"><button class="watch-remove" name="remove" value="{{ watch.name }}" aria-label="Remove {{ watch.name }} from watchlist">Remove</button></form>
 </div>
-{% if watch.error %}<p class="watch-error">{{ watch.error }}</p>{% endif %}
+{% if watch.error %}<p class="watch-error">{{ watch.error }}</p><p class="watch-hint">Listings from stores that failed may reflect an earlier check. Use Check now to retry.</p>{% endif %}
 {% if watch.checked %}<p class="watch-checked">Last successful check <time datetime="{{ watch.checked|replace(' ', 'T') }}Z">{{ watch.checked }} UTC</time></p>{% endif %}
 {% if watch.results %}
 <div class="watch-listings">
