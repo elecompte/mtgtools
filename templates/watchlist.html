@@ -14,6 +14,10 @@
 <div><input id="watch-name" name="names" required maxlength="200" placeholder="Enter a card name" autocomplete="off"><button>Add card</button></div>
 </form>
 {% if watches %}
+<form method="post" class="watch-check">
+<button name="check_now" value="1" {% if pending %}disabled{% endif %}>{{ 'Checking…' if pending else 'Check now' }}</button>
+<span id="check-progress" role="status" data-pending="{{ pending or 0 }}">{% if pending %}{{ pending }} card(s) remaining · results will refresh automatically{% else %}Check all watched cards across every store{% endif %}</span>
+</form>
 <div class="watch-toolbar">
 <label for="watch-filter">Show</label>
 <select id="watch-filter"><option value="all">All cards ({{ watches|length }})</option><option value="available">Available</option><option value="unavailable">Unavailable</option><option value="pending">Waiting for check</option><option value="error">Check failed</option></select>

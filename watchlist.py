@@ -3,7 +3,8 @@ import json
 import os
 import sqlite3
 import time
-from flask import Blueprint, redirect, render_template, request
+import uuid
+from flask import Blueprint, redirect, render_template, request, jsonify
 
 watchlist = Blueprint("watchlist", __name__)
 
@@ -12,6 +13,7 @@ def connect():
     db = sqlite3.connect(os.environ.get("WATCHLIST_DB", "/data/watchlist.sqlite"), timeout=30)
     db.row_factory = sqlite3.Row
     db.execute("CREATE TABLE IF NOT EXISTS watches (name TEXT PRIMARY KEY COLLATE NOCASE, checked TEXT, results TEXT DEFAULT '[]', error TEXT)")
+    db.execute("CREATE TABLE IF NOT EXISTS watch_checks (name TEXT PRIMARY KEY COLLATE NOCASE, request_id TEXT NOT NULL)")
     return db
 
 
@@ -19,7 +21,11 @@ def connect():
 def page():
     with connect() as db:
         if request.method == "POST":
-            if request.form.get("remove"):
+            if request.form.get("check_now"):
+                token = uuid.uuid4().hex
+                db.execute("INSERT OR IGNORE INTO watch_checks SELECT name, ? FROM watches", (token,))
+            elif request.form.get("remove"):
+                db.execute("DELETE FROM watch_checks WHERE name=?", (request.form["remove"],))
                 db.execute("DELETE FROM watches WHERE name=?", (request.form["remove"],))
             else:
                 for name in request.form.getlist("names"):
@@ -29,7 +35,18 @@ def page():
         rows = [dict(row) for row in db.execute("SELECT * FROM watches ORDER BY name")]
     for row in rows:
         row["results"] = json.loads(row["results"])
-    response = render_template("watchlist.html", watches=rows)
+    with connect() as db:
+        pending = db.execute("SELECT COUNT(*) FROM watch_checks").fetchone()[0]
+    response = render_template("watchlist.html", watches=rows, pending=pending)
+    return response
+
+
+@watchlist.get("/watchlist/status")
+def check_status():
+    with connect() as db:
+        pending = db.execute("SELECT COUNT(*) FROM watch_checks").fetchone()[0]
+    response = jsonify(pending=pending)
+    response.cache_control.no_store = True
     return response
 
 
@@ -37,8 +54,12 @@ def check():
     from app import STORES, lookup_card_at_store
     from datetime import datetime, timezone
     with connect() as db:
-        names = [row["name"] for row in db.execute("SELECT name FROM watches WHERE checked IS NULL OR checked < datetime('now','-6 hours')")]
-    for name in names:
+        names = list(db.execute("""SELECT w.name, q.request_id FROM watches w
+            LEFT JOIN watch_checks q ON w.name=q.name
+            WHERE q.name IS NOT NULL OR w.checked IS NULL OR w.checked < datetime('now','-6 hours')
+            ORDER BY q.name IS NULL, w.name"""))
+    for row in names:
+        name = row["name"]
         try:
             results = []
             for store in STORES:
@@ -54,14 +75,21 @@ def check():
             else:
                 db.execute("UPDATE watches SET checked=?, results=?, error=NULL WHERE name=?",
                            (datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), json.dumps(results), name))
+            if row["request_id"]:
+                db.execute("DELETE FROM watch_checks WHERE name=? AND request_id=?", (name, row["request_id"]))
         time.sleep(1)
 
 
 if __name__ == "__main__":
+    next_scheduled = 0
     while True:
         try:
-            check()
+            with connect() as db:
+                pending = db.execute("SELECT COUNT(*) FROM watch_checks").fetchone()[0]
+            if pending or time.monotonic() >= next_scheduled:
+                check()
+                next_scheduled = time.monotonic() + 300
         except Exception:
             import logging
             logging.exception("Watchlist check failed")
-        time.sleep(300)
+        time.sleep(2)

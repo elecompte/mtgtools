@@ -34,3 +34,6 @@
   .watch-add button { width: 100%; }
   .watch-listing { gap: 12px; padding: 12px; }
 }
+
+.watch-check { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
+.watch-check span { color: var(--muted); font-size: .9rem; }

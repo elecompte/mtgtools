@@ -20,3 +20,23 @@ if (filter) {
   filter.addEventListener('change', update);
   update();
 }
+
+const progress = document.querySelector('#check-progress');
+if (progress && Number(progress.dataset.pending) > 0) {
+  const poll = async () => {
+    try {
+      const response = await fetch('/watchlist/status', {cache:'no-store'});
+      if (!response.ok) throw new Error();
+      const {pending} = await response.json();
+      if (!pending) {
+        location.reload();
+        return;
+      }
+      progress.textContent = pending + ' card(s) remaining · results will refresh automatically';
+    } catch {
+      progress.textContent = 'Reconnecting to check progress…';
+    }
+    setTimeout(poll, 2000);
+  };
+  poll();
+}
