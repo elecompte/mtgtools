@@ -90,6 +90,9 @@ def lookup_card_at_store(card_name, store, strict=False):
         }
         try:
             resp = requests.post(store["api"], headers=headers, json=payload, timeout=10)
+            # This catalog search returns an empty 404 when a name has no matches.
+            if resp.status_code == 404 and not resp.content.strip():
+                return []
             resp.raise_for_status()
             data = resp.json()
             products = data.get("products", {}).get("items", [])
