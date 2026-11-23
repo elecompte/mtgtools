@@ -108,7 +108,7 @@
 
 .watch-items { gap: 10px; }
 .watch-item { padding: 10px 14px; }
-.watch-item[data-state="available"] { background: #183a2a; border-color: #397a53; }
+.watch-item[data-state="available"] { background: #20312a; border-color: #405e4c; }
 .watch-item[data-state="unavailable"] { background: #303536; border-color: #596163; }
 .watch-item[data-state="pending"] { background: #1b354d; border-color: #416e99; }
 .watch-item[data-state="error"] { background: #482626; border-color: #995252; }

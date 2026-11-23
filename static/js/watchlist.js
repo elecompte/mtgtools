@@ -133,16 +133,24 @@ dialog.addEventListener('keydown', event => {
   }
 });
 let touchStart;
-const swipe = field('match-swipe');
+const swipe = dialog;
 swipe.addEventListener('touchstart', event => {
   touchStart = event.touches.length === 1 && !event.target.closest('a, button') ?
-    {x:event.touches[0].clientX, y:event.touches[0].clientY} : null;
+    {x:event.touches[0].clientX, y:event.touches[0].clientY, atTop:dialog.scrollTop <= 1} : null;
 }, {passive:true});
 swipe.addEventListener('touchend', event => {
-  if (!touchStart || event.changedTouches.length !== 1) return;
+  if (!touchStart || event.changedTouches.length !== 1) {
+    touchStart = null;
+    return;
+  }
   const dx = event.changedTouches[0].clientX - touchStart.x;
   const dy = event.changedTouches[0].clientY - touchStart.y;
+  const startedAtTop = touchStart.atTop;
   touchStart = null;
+  if (startedAtTop && dialog.scrollTop <= 1 && dy >= 80 && dy > Math.abs(dx) * 1.5) {
+    dialog.close();
+    return;
+  }
   if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
     showMatch(matchIndex + (dx < 0 ? 1 : -1));
   }
