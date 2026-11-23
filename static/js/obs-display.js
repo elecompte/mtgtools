@@ -6,8 +6,12 @@ const cards = {
   mana: ['Floating mana', '', '', 'wubrg.png', []],
 };
 const colors = [
-  ['white', 'W', '#fff2c3'], ['blue', 'U', '#80d1ff'], ['black', 'B', '#d2b6e1'],
-  ['red', 'R', '#ffa18b'], ['green', 'G', '#9ce2a4'], ['colorless', 'C', '#d9dfe2'],
+  ['white', 'plains', '#ece7d7', '#171914'],
+  ['blue', 'island', '#123850', '#fff'],
+  ['black', 'swamp', '#211d28', '#fff'],
+  ['red', 'mountain', '#69291e', '#fff'],
+  ['green', 'forest', '#17432d', '#fff'],
+  ['colorless', 'colorless', '#363c42', '#fff'],
 ];
 const byId = id => document.getElementById(id);
 function element(parent, tag, attributes) {
@@ -34,12 +38,19 @@ function render({card, values}) {
   if (card === 'mana') {
     const pool = byId('pool');
     pool.replaceChildren();
-    colors.filter(([color]) => values[color] !== false).forEach(([color, symbol, fill], i) => {
-      const x = 26 + (i % 3) * 185;
-      const y = 88 + Math.floor(i / 3) * 149;
-      element(pool, 'rect', {x, y, width:177, height:139, rx:12, fill:'#192625'});
-      element(pool, 'text', {x:x+12, y:y+40, fill, 'font-size':36}).textContent = symbol;
-      fitText(element(pool, 'text', {x:x+12, y:y+119, 'font-size':77, class:'number'}), values['value-' + color] ?? 0, 153);
+    colors.filter(([color]) => values[color] !== false).forEach(([color, art, tint, ink], i) => {
+      const x = 26 + (i % 2) * 279;
+      const y = 85 + Math.floor(i / 2) * 101;
+      const bounds = {x, y, width: 269, height: 92};
+      const clip = element(pool, 'clipPath', {id: 'tile-' + color});
+      element(clip, 'rect', {...bounds, rx: 12});
+      const tile = element(pool, 'g', {'clip-path': 'url(#tile-' + color + ')'});
+      element(tile, 'image', {...bounds, href: '/static/img/' + art + '.png', preserveAspectRatio: 'xMidYMid slice'});
+      element(tile, 'rect', {...bounds, fill: tint, opacity: 0.66});
+      const center = {x: x + bounds.width / 2, 'text-anchor': 'middle', fill: ink};
+      element(tile, 'text', {...center, y: y + 27, 'font-size': 25}).textContent = color.toUpperCase();
+      fitText(element(tile, 'text', {...center, y: y + 81, 'font-size': 58, class: 'number'}),
+        values['value-' + color] ?? 0, bounds.width - 20);
     });
     return;
   }
