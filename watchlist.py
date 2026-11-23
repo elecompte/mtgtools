@@ -119,3 +119,30 @@ if __name__ == "__main__":
             import logging
             logging.exception("Watchlist check failed")
         time.sleep(2)
+
+
+@watchlist.get("/watchlist/card")
+def card_details():
+    from app import requests, SCRYFALL_HEADERS
+    name = request.args.get("name", "").strip()
+    if not name or len(name) > 200:
+        return jsonify(error="A card name is required."), 400
+    try:
+        response = requests.get(
+            "https://api.scryfall.com/cards/named",
+            params={"exact": name},
+            headers=SCRYFALL_HEADERS,
+            timeout=10,
+        )
+        response.raise_for_status()
+        card = response.json()
+        faces = card.get("card_faces") or [card]
+        return jsonify(
+            oracle_text=card.get("oracle_text") or "\n\n".join(
+                face.get("name", "") + "\n" + face.get("oracle_text", "") for face in faces
+            ),
+            image=(card.get("image_uris") or faces[0].get("image_uris") or {}).get("normal"),
+            image_set=card.get("set_name"),
+        )
+    except (requests.RequestException, ValueError, KeyError):
+        return jsonify(error="Card details could not be loaded. Try again shortly."), 502
