@@ -182,7 +182,7 @@ def card_symbols():
         symbols = {item["symbol"]: {"url": media_url(item["svg_uri"]), "label": item["english"]}
                    for item in response.json()["data"]}
         result = jsonify(symbols)
-        result.cache_control.max_age = 86400
+        result.cache_control.no_store = True
         return result
     except (requests.RequestException, ValueError, KeyError):
         return jsonify(error="Symbols unavailable"), 502

@@ -113,7 +113,7 @@ field('match-image').addEventListener('error', () => {
 let symbolRequest;
 function getSymbols() {
   if (!symbolRequest) {
-    symbolRequest = fetch('/watchlist/symbols').then(response => {
+    symbolRequest = fetch('/watchlist/symbols?local=2', {cache: 'no-store'}).then(response => {
       if (!response.ok) throw new Error();
       return response.json();
     }).catch(error => { symbolRequest = null; throw error; });
@@ -125,13 +125,14 @@ function renderOracle(text, symbols) {
   oracle.replaceChildren();
   for (const part of text.split(/(\{[^{}]+\})/g)) {
     const symbol = symbols[part];
-    if (!symbol) {
+    const url = symbol && new URL(symbol.url, location.origin);
+    if (!url || url.origin !== location.origin || !url.pathname.startsWith('/watchlist/media/')) {
       oracle.append(document.createTextNode(part));
       continue;
     }
     const image = document.createElement('img');
     image.className = 'oracle-symbol';
-    image.src = symbol.url;
+    image.src = url.href;
     image.alt = part;
     image.title = symbol.label;
     oracle.append(image);
