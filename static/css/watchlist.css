@@ -135,3 +135,5 @@
 .result-watch-form [role="status"] { font-size: .85rem; color: var(--muted); }
 #result-count { color: var(--muted); font-size: .9rem; }
 .scryfall-next { margin-top: 20px; }
+
+.result-watch-form[hidden] { display: none; }

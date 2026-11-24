@@ -59,7 +59,7 @@ SCRYFALL_HEADERS = {
     "Accept": "application/json;q=0.9,*/*;q=0.8",
 }
 
-JOB_LOCK = threading.Lock()
+JOB_LOCK = threading.RLock()
 IMPORT_JOBS = {}
 
 def resolve_card_name(card_name: str):
@@ -167,61 +167,52 @@ def normalize_card_entries(card_entries):
     return cleaned
 
 def run_import_job(job_id, limited_entries):
-    results_by_store = {store['storeName']: [] for store in STORES}
-    all_results = []
-    unavailable = []
-    searched_cards = []
-    current = 0
-    for entry in limited_entries:
+    for index, entry in enumerate(limited_entries):
         name = entry["name"]
-        set_name = entry.get("set")
-        exact = entry.get("exact", False)
-        corrected = None
         matches = []
+        failures = []
+        corrected = None
         for store in STORES:
-            store_results = lookup_card_at_store(name, store)
-            if not store_results:
-                if corrected is None and not exact:
-                    corrected = resolve_card_name(name)
-                if corrected and corrected.lower() != name.lower():
-                    store_results = lookup_card_at_store(corrected, store)
-            store_results = [r for r in store_results if float(r.get("inStock") or 0) > 0]
-            if store_results and set_name:
-                store_results = [
-                    result for result in store_results
-                    if set_name_matches(result.get("set"), set_name)
-                ]
-            if store_results:
-                results_by_store[store['storeName']].extend(store_results)
-                all_results.extend(store_results)
-                matches.extend(store_results)
-        if not matches:
-            unavailable.append(name)
-        searched_cards.append({"name": name, "set": set_name, "matches": list({r["url"]: r for r in matches}.values())})
-        current += 1
+            try:
+                results = lookup_card_at_store(name, store, strict=True)
+                if not results and not entry.get("exact"):
+                    if corrected is None:
+                        corrected = resolve_card_name(name)
+                    if corrected and corrected.lower() != name.lower():
+                        results = lookup_card_at_store(corrected, store, strict=True)
+                results = [r for r in results if float(r.get("inStock") or 0) > 0]
+                if entry.get("set"):
+                    results = [r for r in results if set_name_matches(r.get("set"), entry["set"])]
+                matches.extend(results)
+            except Exception:
+                failures.append(store["storeName"])
+                app.logger.exception("Lookup failed for %s at %s", name, store["storeName"])
+        card = {
+            "name": name, "set": entry.get("set"),
+            "matches": list({r["url"]: r for r in matches}.values()),
+            "state": "error" if failures else ("available" if matches else "unavailable"),
+            "error": "Could not check " + ", ".join(failures) if failures else None,
+        }
         with JOB_LOCK:
-            job = IMPORT_JOBS.get(job_id)
-            if job:
-                job["current"] = current
+            job = IMPORT_JOBS[job_id]
+            job["searched_cards"][index] = card
+            job["current"] = index + 1
     with JOB_LOCK:
-        job = IMPORT_JOBS.get(job_id)
-        if job:
-            job["searched_cards"] = searched_cards
-            job["unavailable"] = unavailable
-            job["status"] = "done"
-            job["results_by_store"] = results_by_store
-            job["all_results"] = all_results
-            job["card_names"] = [entry["name"] for entry in limited_entries]
+        IMPORT_JOBS[job_id]["status"] = "done"
 
-def create_import_job(card_entries):
+
+def create_import_job(card_entries, scryfall_meta=None):
     cleaned = normalize_card_entries(card_entries)
     limited_entries = cleaned[:50]
     job_id = uuid.uuid4().hex
     with JOB_LOCK:
         IMPORT_JOBS[job_id] = {
-            "status": "running",
-            "current": 0,
-            "total": len(limited_entries),
+            "status": "running", "current": 0, "total": len(limited_entries),
+            "remaining": cleaned[50:], "scryfall_meta": scryfall_meta,
+            "searched_cards": [
+                {"name": e["name"], "set": e.get("set"), "matches": [], "state": "pending", "error": None}
+                for e in limited_entries
+            ],
         }
     thread = threading.Thread(target=run_import_job, args=(job_id, limited_entries), daemon=True)
     thread.start()
@@ -365,47 +356,60 @@ def import_job():
     scryfall_meta = data.get("scryfall") or None
     if not isinstance(card_entries, list) or not card_entries:
         return jsonify({"error": "Missing cardNames"}), 400
-    job_id, total = create_import_job(card_entries)
-    if scryfall_meta:
-        with JOB_LOCK:
-            job = IMPORT_JOBS.get(job_id)
-            if job is not None:
-                job["scryfall_meta"] = scryfall_meta
+    job_id, total = create_import_job(card_entries, scryfall_meta)
     return jsonify({"job_id": job_id, "total": total})
+
+
+@app.post("/import_job/<job_id>/next")
+def import_job_next(job_id):
+    with JOB_LOCK:
+        job = IMPORT_JOBS.get(job_id)
+        if not job:
+            return jsonify(error="Search expired. Please search again."), 404
+        if job["status"] != "done":
+            return jsonify(error="Wait for this batch to finish."), 409
+        remaining = job["remaining"]
+        if not remaining:
+            return jsonify(error="No more cards."), 400
+        # Repeated requests reuse the same next batch.
+        if job.get("next_job"):
+            next_id = job["next_job"]
+            return jsonify(job_id=next_id)
+        next_id, total = create_import_job(remaining)
+        job["next_job"] = next_id
+    return jsonify(job_id=next_id, total=total)
+
 
 @app.route('/import_job/<job_id>/progress', methods=['GET'])
 def import_job_progress(job_id):
     with JOB_LOCK:
         job = IMPORT_JOBS.get(job_id)
         if not job:
-            return jsonify({"error": "Job not found"}), 404
-        return jsonify({
-            "status": job["status"],
-            "current": job["current"],
-            "total": job["total"],
-        })
+            return jsonify(error="Search expired. Please search again."), 404
+        cards = list(job["searched_cards"])
+        status, current, total = job["status"], job["current"], job["total"]
+    response = jsonify(status=status, current=current, total=total,
+                       html=render_template("lookup_cards.html", searched_cards=cards))
+    response.cache_control.no_store = True
+    return response
+
 
 @app.route('/import_job/<job_id>/results', methods=['GET'])
 def import_job_results(job_id):
     with JOB_LOCK:
         job = IMPORT_JOBS.get(job_id)
         if not job:
-            return jsonify({"error": "Job not found"}), 404
-        if job["status"] != "done":
-            return jsonify({"error": "Job not complete"}), 400
-        results_by_store = job.get("results_by_store", {})
-        all_results = job.get("all_results", [])
-        card_names = job.get("card_names", [])
-        scryfall_meta = job.get("scryfall_meta")
+            return jsonify(error="Search expired. Please search again."), 404
+        cards = list(job["searched_cards"])
+        meta = job.get("scryfall_meta")
+        next_count = min(50, len(job["remaining"])) or (meta or {}).get("next_count", 0)
+        status = job["status"]
     return render_template(
-        'import_results.html',
-        results_by_store=results_by_store,
-        all_results=all_results,
-        card_names=card_names,
-        scryfall_meta=scryfall_meta,
-        unavailable=job.get("unavailable", []),
-        searched_cards=job.get("searched_cards", []),
+        "import_results.html", results_by_store={s["storeName"]: [] for s in STORES},
+        searched_cards=cards, scryfall_meta=meta, next_count=next_count,
+        job_id=job_id, job_status=status,
     )
+
 
 @app.route('/import', methods=['GET', 'POST'])
 def import_cards():
@@ -423,12 +427,8 @@ def import_cards():
         card_names = [line.strip() for line in content.splitlines() if line.strip()]
     else:
         return render_template('import.html', error="No file uploaded")
-    entries = normalize_card_entries(card_names)[:50]
-    job_id = uuid.uuid4().hex
-    with JOB_LOCK:
-        IMPORT_JOBS[job_id] = {"status": "running", "current": 0, "total": len(entries)}
-    run_import_job(job_id, entries)
-    return import_job_results(job_id)
+    job_id, _ = create_import_job(card_names)
+    return redirect(url_for("import_job_results", job_id=job_id))
 
 @app.get('/service-worker.js')
 def service_worker():

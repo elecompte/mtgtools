@@ -9,7 +9,7 @@
             <form id="importForm" enctype="multipart/form-data" method="POST">
                 <div class="input-group">
                     <h2>Search by name</h2>
-<label for="cardNames">Card names · up to 50, one per line</label>
+<label for="cardNames">Card names · one per line, searched in batches of 50</label>
 <textarea id="cardNames" name="cardNames" rows="5" placeholder="Sol Ring&#10;Arcane Signet"></textarea>
 <label for="fileInput">Or use a text file</label><input type="file" id="fileInput" name="file" accept=".txt">
 <button type="submit">Find in stores</button>
@@ -60,9 +60,6 @@
         if (!names.length) {
             status.textContent = 'Enter card names or upload a file.';
             return;
-        }
-        if (names.length > 50) {
-            names = names.slice(0, 50);
         }
         startImport(names, status);
     });
@@ -152,7 +149,7 @@
                 }
                 return;
             }
-            pollImportProgress(data.job_id, data.total, statusEl);
+            window.location.href = '/import_job/' + data.job_id + '/results';
         } catch (err) {
             overlay.classList.remove('active');
             if (statusEl) {
@@ -161,28 +158,5 @@
         }
     }
 
-    function pollImportProgress(jobId, total, statusEl) {
-        var interval = setInterval(async function() {
-            try {
-                var resp = await fetch('/import_job/' + jobId + '/progress');
-                var data = await resp.json();
-                if (!resp.ok) {
-                    throw new Error(data.error || 'Import failed.');
-                }
-                var current = data.current || 0;
-                overlayText.textContent = 'Searching for cards: ' + current + ' of ' + (total || data.total || 0);
-                if (data.status === 'done') {
-                    clearInterval(interval);
-                    window.location.href = '/import_job/' + jobId + '/results';
-                }
-            } catch (err) {
-                clearInterval(interval);
-                overlay.classList.remove('active');
-                if (statusEl) {
-                    statusEl.textContent = 'Import failed.';
-                }
-            }
-        }, 600);
-    }
     </script>
 {% endblock %}

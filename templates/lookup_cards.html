@@ -1,0 +1,14 @@
+{% for item in searched_cards %}
+<article class="watch-item lookup-result" data-state="{{ item.state }}" data-all-matches='{{ item.matches|tojson }}'
+{% if item.matches %}data-matches='{{ item.matches|tojson }}' tabindex="0" role="group" aria-haspopup="dialog" aria-controls="match-dialog" aria-label="View matches for {{ item.name }}"{% endif %}>
+<div class="watch-item-header">
+<div><div class="watch-heading"><h2>{{ item.name }}</h2>{% if item.set %}<small>{{ item.set }}</small>{% endif %}<span class="watch-state-text">{{ {'available':'Available','unavailable':'Unavailable','pending':'Waiting to check','error':'Check failed'}[item.state] }}</span></div>
+{% if item.matches %}<small>{{ item.matches|map(attribute='store')|unique|join(' · ') }}</small>{% endif %}</div>
+{% if item.state == "unavailable" %}
+<form action="/watchlist" method="post" class="watch-actions result-watch-form">
+<input type="hidden" name="names" value="{{ item.name }}">
+<button>Watchlist</button><span role="status"></span>
+</form>
+{% endif %}
+</div>{% if item.error %}<p class="watch-error">{{ item.error }}</p>{% endif %}</article>
+{% else %}<p>No cards were searched.</p>{% endfor %}
