@@ -221,11 +221,18 @@ pollTokens();
 
 
 function fitTokenBoard() {
+  const canvas = document.querySelector('#token-canvas');
+  const canvasWidth = 1200, canvasHeight = 900;
   const count = new Set(tokenState.groups.map(group => groupType(group) + ':' + group.counters)).size;
-  const columns = Math.max(1, Math.min(3, count));
+  const columns = Math.max(1, Math.min(5, count));
+  // Measure at a stable native size so labels and badges scale with the artwork.
   tokenGroups.style.width = (columns * 400) + 'px';
   tokenGroups.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';
-  const scale = Math.min(innerWidth / (columns * 400), innerHeight / Math.max(tokenGroups.scrollHeight, 1), 1);
+  const groupHeight = Math.max(1, ...[...tokenGroups.children].map(card => card.offsetHeight));
+  const preferredHeight = count < 4 ? canvasHeight / 3 : count === 4 ? 270 : 240;
+  const scale = Math.min(preferredHeight / groupHeight,
+    canvasWidth / (columns * 400), canvasHeight / Math.max(tokenGroups.scrollHeight, 1));
   tokenGroups.style.transform = 'scale(' + scale + ')';
+  canvas.style.transform = 'scale(' + Math.min(innerWidth / canvasWidth, innerHeight / canvasHeight) + ')';
 }
 if (!tokenControl) addEventListener('resize', fitTokenBoard);
