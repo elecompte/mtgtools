@@ -98,10 +98,11 @@ function renderTokens(state) {
       const rows = [
         [['tap','ready',false,'TAP'],['tap','sick',false,'TAP SICK'],['tap','all',true,'TAP ALL']],
         [['untap','ready',false,'UNTAP'],['untap','sick',false,'UNTAP SICK'],['untap','all',true,'UNTAP ALL']],
-        [['kill','ready',false,'KILL'],['kill','sick',false,'KILL SICK'],['kill','all',true,'KILL ALL']],
+        [['kill','untapped',false,'UNTAPPED'],['kill','tapped',false,'TAPPED'],['kill','sick',false,'SICK'],['kill','all',true,'ALL']],
         [['counter','untapped',false,'UNTAPPED'],['counter','tapped',false,'TAPPED'],['counter','sick',false,'SICK'],['counter','all',true,'ALL']]
       ];
       rows.forEach((buttons, rowIndex) => {
+        if (rowIndex === 2) management.append(tokenElement('span', 'Kill', 'counter-row-label'));
         if (rowIndex === 3) management.append(tokenElement('span', 'Add counters', 'counter-row-label'));
         const row = tokenElement('div', null, 'token-button-row');
         buttons.forEach(([operation, target, all, text]) => {
@@ -109,7 +110,7 @@ function renderTokens(state) {
             if (operation === 'tap' && group.tapped) return false;
             if (operation === 'untap' && !group.tapped) return false;
             if (target === 'ready') return !group.sick;
-            if (target === 'sick') return group.sick && (operation !== 'counter' || !group.tapped);
+            if (target === 'sick') return group.sick && (!['counter', 'kill'].includes(operation) || !group.tapped);
             if (target === 'untapped') return !group.tapped && !group.sick;
             if (target === 'tapped') return group.tapped;
             return true;
@@ -163,6 +164,10 @@ async function performTokenAction(action) {
 if (tokenControl) {
   const createForm = document.querySelector('#create-tokens');
   const crusade = document.querySelector('#crusade-toggle');
+  const createTapped = document.querySelector('#create-tapped-toggle');
+  createTapped.addEventListener('click', () => {
+    createTapped.setAttribute('aria-pressed', String(createTapped.getAttribute('aria-pressed') !== 'true'));
+  });
   document.querySelectorAll('[data-create-type]').forEach(button => button.addEventListener('click', () => {
     const kind = button.dataset.createType;
     if (createTypes.has(kind)) createTypes.delete(kind); else createTypes.add(kind);
@@ -181,6 +186,7 @@ if (tokenControl) {
     event.preventDefault();
     if (!createTypes.size) return;
     sendTokenAction({action:'create', types:[...createTypes], quantity:Number(createForm.elements.quantity.value),
+      tapped:createTapped.getAttribute('aria-pressed') === 'true',
       crusade:crusade.getAttribute('aria-pressed') === 'true'});
   });
   document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {

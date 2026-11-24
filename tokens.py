@@ -61,8 +61,11 @@ def state():
                 kinds = selected_types(data)
                 if quantity < 1:
                     abort(400)
+                tapped = data.get("tapped", False)
+                if type(tapped) is not bool:
+                    abort(400)
                 for kind in kinds:
-                    groups.append({"type": kind, "quantity": quantity, "counters": counters, "tapped": False, "sick": True})
+                    groups.append({"type": kind, "quantity": quantity, "counters": counters, "tapped": tapped, "sick": True})
                 if data.get("crusade"):
                     for group in groups:
                         group["counters"] += quantity * len(kinds)
@@ -127,7 +130,7 @@ def state():
                         eligible = eligible and not group["sick"]
                     elif target == "sick":
                         eligible = eligible and group["sick"]
-                        if operation == "counter":
+                        if operation in {"counter", "kill"}:
                             eligible = eligible and not group["tapped"]
                     elif target == "untapped":
                         eligible = eligible and not group["tapped"] and not group["sick"]

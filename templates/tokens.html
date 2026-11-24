@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Battlefield tokens{% endblock %}
 {% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-shadows-11">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-kill-12">{% endblock %}
 {% block content %}
 {% if control %}
 <main class="library token-controls">
 <h1>Battlefield tokens</h1>
-<p>Statues are 1/1 Sculpture Treasure artifact creatures; Thopters are 1/1 artifact creatures with flying. Each type and power/toughness group shows ready, summoning-sick and tapped tokens. Buttons act on one token per click, or the whole P/T group when marked ALL. UNTAPPED means ready and untapped; SICK counters target untapped sick tokens. KILL and KILL SICK also include tapped tokens.</p>
+<p>Statues are 1/1 Sculpture Treasure artifact creatures; Thopters are 1/1 artifact creatures with flying. Each type and power/toughness group shows ready, summoning-sick and tapped tokens. Buttons act on one token per click, or the whole P/T group when marked ALL. UNTAPPED means ready and untapped; SICK targets untapped sick tokens. TAPPED includes tapped sick tokens.</p>
 <label for="token-url">OBS Browser Source · 1200 × 900 · 4:3</label>
 <input id="token-url" readonly onclick="this.select()">
 <form id="create-tokens" class="token-create">
@@ -21,6 +21,7 @@
 <input name="quantity" aria-label="Number of tokens to create" type="number" min="1" max="1000000" value="1" required>
 <button type="button" data-step="1" aria-label="Create more tokens">+</button>
 </div>
+<button type="button" id="create-tapped-toggle" aria-pressed="false">Tapped</button>
 <button type="button" id="crusade-toggle" aria-pressed="false" title="Each new token adds a Crusade trigger, giving all tokens that many counters">Cathars’ Crusade</button>
 </form>
 <section class="token-actions" aria-label="Actions on selected tokens">
@@ -50,5 +51,5 @@
 <div id="token-canvas"><div id="token-groups" aria-label="Battlefield tokens"></div></div>
 {% endif %}
 <script id="token-type-config" type="application/json">{{ token_types|tojson }}</script>
-<script src="/static/js/tokens.js?v=token-shadows-11" defer></script>
+<script src="/static/js/tokens.js?v=token-kill-12" defer></script>
 {% endblock %}
