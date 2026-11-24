@@ -92,7 +92,8 @@ function renderTokens(state) {
     scene.dataset.count = visibleStates;
     const visual = tokenElement('div', null, 'token-group-visual');
     visual.append(scene, tokenElement('strong', (definition.base + counters) + '/' + (definition.base + counters), 'statue-pt'));
-    card.append(tokenElement('strong', definition.name, 'token-group-name'), visual);
+    visual.prepend(tokenElement('strong', definition.name, 'token-group-name'));
+    card.append(visual);
     if (tokenControl) {
       const rows = [
         [['tap','ready',false,'TAP'],['tap','sick',false,'TAP SICK'],['tap','all',true,'TAP ALL']],
