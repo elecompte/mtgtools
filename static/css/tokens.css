@@ -44,3 +44,9 @@ body.token-overlay, html:has(.token-overlay) { margin: 0; background: transparen
 .statue-management { align-self: stretch; margin-top: 12px; }
 .statue-management summary { color: #dcc4f4; cursor: pointer; padding: 10px; }
 .token-controls .group-controls { margin: 8px 0; padding: 10px; }
+
+.statue-management { display: grid; gap: 6px; width: 100%; margin-top: 16px; }
+.token-button-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 6px; }
+.token-controls .token-button-row button { margin: 0; padding: 8px 3px; font-size: .8rem; font-weight: 700; }
+.token-controls button:disabled { opacity: .3; cursor: default; }
+.counter-row-label { margin-top: 6px; color: var(--muted); font-size: .85rem; }

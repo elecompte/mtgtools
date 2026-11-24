@@ -6,7 +6,7 @@
 {% if control %}
 <main class="library token-controls">
 <h1>Statue tokens</h1>
-<p>1/1 Sculpture Treasure artifact creatures. Each power/toughness group shows ready, summoning-sick and tapped statues. Open Manage to change some or all of a group.</p>
+<p>1/1 Sculpture Treasure artifact creatures. Each power/toughness group shows ready, summoning-sick and tapped statues. Buttons act on one token per click, or the whole P/T group when marked ALL. UNTAPPED means ready and untapped; SICK counters target untapped sick tokens. KILL and KILL SICK also include tapped tokens.</p>
 <label for="token-url">OBS Browser Source · 1200 × 600</label>
 <input id="token-url" readonly onclick="this.select()">
 <form id="create-tokens">
@@ -31,5 +31,5 @@
 {% else %}
 <div id="token-groups" aria-label="Statue tokens"></div>
 {% endif %}
-<script src="/static/js/tokens.js?v=readable-counts-4" defer></script>
+<script src="/static/js/tokens.js?v=group-buttons-5" defer></script>
 {% endblock %}

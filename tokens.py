@@ -58,6 +58,51 @@ def state():
                         group["counters"] += quantity
                     elif action == "next_turn":
                         group.update(tapped=False, sick=False)
+            elif action == "group_action":
+                counters = number(data, "counters", 0)
+                operation = data.get("operation")
+                target = data.get("target")
+                all_tokens = data.get("all") is True
+                if operation not in {"tap", "untap", "kill", "counter"} or target not in {"ready", "sick", "untapped", "tapped", "all"}:
+                    abort(400)
+                selected_any = False
+                remaining = []
+                changed = []
+                for group in groups:
+                    eligible = group["counters"] == counters
+                    if operation == "tap":
+                        eligible = eligible and not group["tapped"]
+                    elif operation == "untap":
+                        eligible = eligible and group["tapped"]
+                    if target == "ready":
+                        eligible = eligible and not group["sick"]
+                    elif target == "sick":
+                        eligible = eligible and group["sick"]
+                        if operation == "counter":
+                            eligible = eligible and not group["tapped"]
+                    elif target == "untapped":
+                        eligible = eligible and not group["tapped"] and not group["sick"]
+                    elif target == "tapped":
+                        eligible = eligible and group["tapped"]
+                    if eligible and (all_tokens or not selected_any):
+                        selected_any = True
+                        count = group["quantity"] if all_tokens else 1
+                        selected = dict(group, quantity=count)
+                        if group["quantity"] > count:
+                            remaining.append(dict(group, quantity=group["quantity"] - count))
+                        if operation == "tap":
+                            selected["tapped"] = True
+                        elif operation == "untap":
+                            selected["tapped"] = False
+                        elif operation == "counter":
+                            selected["counters"] += 1
+                        if operation != "kill":
+                            changed.append(selected)
+                    else:
+                        remaining.append(group)
+                if not selected_any:
+                    abort(409)
+                groups = remaining + changed
             elif action in {"tap", "untap", "ready", "sick", "counter_up", "counter_down", "remove"}:
                 index = number(data, "index", 0)
                 if index >= len(groups):

@@ -17,8 +17,7 @@ function renderTokens(state) {
     const members = state.groups.map((group, index) => ({group,index}))
       .filter(({group}) => group.counters === counters);
     const scene = tokenElement('div', null, 'statue-scene');
-    const management = tokenElement('details', null, 'statue-management');
-    management.append(tokenElement('summary', 'Manage ' + (1 + counters) + '/' + (1 + counters) + ' statues'));
+    const management = tokenElement('div', null, 'statue-management');
     const states = [
       {key:'ready', label:'Ready', select:group => !group.tapped && !group.sick},
       {key:'sick', label:'Summoning sick', select:group => !group.tapped && group.sick},
@@ -46,38 +45,41 @@ function renderTokens(state) {
       figure.setAttribute('aria-label', quantity + ' ' + state.label + ' statues, ' +
         (1 + counters) + '/' + (1 + counters));
       scene.append(figure);
-      cohort.forEach(({group, index}) => {
-    if (tokenControl) {
-      const form = tokenElement('form', null, 'group-controls');
-      const label = tokenElement('label', (group.tapped ? 'Tapped' : 'Untapped') + (group.sick ? ' · sick' : ' · ready') + ' · apply to ');
-      const qty = tokenElement('input');
-      Object.assign(qty, {type:'number',min:'1',max:String(group.quantity),value:String(group.quantity),required:true});
-      label.append(qty, ' tokens');
-      form.append(label);
-      for (const [action, text] of [
-        [group.tapped ? 'untap' : 'tap', group.tapped ? 'Untap' : 'Tap'],
-        [group.sick ? 'ready' : 'sick', group.sick ? 'Mark ready' : 'Mark sick'],
-        ['counter_up','+1 counter'],['counter_down','−1 counter'],['remove','Remove / sacrifice']
-      ]) {
-        const button = tokenElement('button', text);
-        button.type = 'submit';
-        button.value = action;
-        form.append(button);
-      }
-      form.addEventListener('submit', event => {
-        event.preventDefault();
-        sendTokenAction({action:event.submitter.value, index, group, quantity:Number(qty.value)});
-      });
-      management.append(form);
-    }
-
-
-      });
     }
     scene.dataset.count = visibleStates;
     card.append(scene, tokenElement('strong', (1 + counters) + '/' + (1 + counters), 'statue-pt'));
     if (tokenControl) {
-      card.append(tokenElement('small', '+' + counters + ' counters', 'statue-counters'), management);
+      const rows = [
+        [['tap','ready',false,'TAP'],['tap','sick',false,'TAP SICK'],['tap','all',true,'TAP ALL']],
+        [['untap','ready',false,'UNTAP'],['untap','sick',false,'UNTAP SICK'],['untap','all',true,'UNTAP ALL']],
+        [['kill','ready',false,'KILL'],['kill','sick',false,'KILL SICK'],['kill','all',true,'KILL ALL']],
+        [['counter','untapped',false,'UNTAPPED'],['counter','tapped',false,'TAPPED'],['counter','sick',false,'SICK'],['counter','all',true,'ALL']]
+      ];
+      rows.forEach((buttons, rowIndex) => {
+        if (rowIndex === 3) management.append(tokenElement('span', 'Add counters', 'counter-row-label'));
+        const row = tokenElement('div', null, 'token-button-row');
+        buttons.forEach(([operation, target, all, text]) => {
+          const eligible = members.some(({group}) => {
+            if (operation === 'tap' && group.tapped) return false;
+            if (operation === 'untap' && !group.tapped) return false;
+            if (target === 'ready') return !group.sick;
+            if (target === 'sick') return group.sick && (operation !== 'counter' || !group.tapped);
+            if (target === 'untapped') return !group.tapped && !group.sick;
+            if (target === 'tapped') return group.tapped;
+            return true;
+          });
+          const button = tokenElement('button', text);
+          button.type = 'button';
+          button.disabled = !eligible;
+          button.title = (all ? 'All eligible statues' : 'One statue') + ' in this P/T group';
+          button.addEventListener('click', () => sendTokenAction({
+            action:'group_action', counters, operation, target, all
+          }));
+          row.append(button);
+        });
+        management.append(row);
+      });
+      card.append(management);
     }
     tokenGroups.append(card);
   });
@@ -91,8 +93,12 @@ function renderTokens(state) {
     document.querySelector('[data-action=undo]').disabled = !state.can_undo;
   }
 }
-async function sendTokenAction(action) {
-  if (busy) return;
+let tokenActionQueue = Promise.resolve();
+function sendTokenAction(action) {
+  tokenActionQueue = tokenActionQueue.then(() => performTokenAction(action));
+  return tokenActionQueue;
+}
+async function performTokenAction(action) {
   busy = true;
   writeVersion += 1;
   try {
