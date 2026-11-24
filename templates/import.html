@@ -28,13 +28,8 @@
             </form>
         </div>
     </div>
-    </main><div id="loadingOverlay">
-        <div class="loader"></div>
-        <div role="status" class="loading-text">Loading, please wait...</div>
-    </div>
+    </main>
     <script>
-    var overlay = document.getElementById('loadingOverlay');
-    var overlayText = overlay.querySelector('.loading-text');
 
     document.getElementById('importForm').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -132,8 +127,7 @@
     }
 
     async function startImport(names, statusEl, scryfallMeta) {
-        overlayText.textContent = 'Searching for cards: 0 of ' + names.length;
-        overlay.classList.add('active');
+        statusEl.textContent = 'Opening results…';
 
         try {
             var resp = await fetch('/import_job', {
@@ -143,7 +137,6 @@
             });
             var data = await resp.json();
             if (!resp.ok) {
-                overlay.classList.remove('active');
                 if (statusEl) {
                     statusEl.textContent = data.error || 'Import failed.';
                 }
@@ -151,7 +144,6 @@
             }
             window.location.href = '/import_job/' + data.job_id + '/results';
         } catch (err) {
-            overlay.classList.remove('active');
             if (statusEl) {
                 statusEl.textContent = 'Import failed.';
             }

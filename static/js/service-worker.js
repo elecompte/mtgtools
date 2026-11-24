@@ -1,4 +1,4 @@
-const cacheName = 'mtgtools-studio-v4';
+const cacheName = 'mtgtools-studio-v5';
 const assets = [
   "/",
   "/mana",
@@ -30,13 +30,14 @@ const assets = [
   "/static/img/valetbutton.png",
   "/static/img/wubrg.png",
   "/static/css/studio.css",
+  "/static/css/portals-theme.css",
   "/static/css/valet.css",
   "/static/css/krenko.css",
   "/static/css/animpakal.css",
   "/static/css/mana.css"
 ];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets.map(url => new Request(url, {cache: 'reload'})))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key =>
@@ -48,6 +49,15 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin || event.request.method !== 'GET' || !assets.includes(url.pathname)) return;
   event.respondWith(caches.open(cacheName).then(async cache => {
     const cached = await cache.match(url.pathname);
-    return cached || fetch(event.request);
+    // Artwork can be reused, while pages, scripts and styles must pick up deployments.
+    if (url.pathname.startsWith('/static/img/') && cached) return cached;
+    try {
+      const response = await fetch(new Request(event.request, {cache: 'no-store'}));
+      if (response.ok) await cache.put(url.pathname, response.clone());
+      return response;
+    } catch (error) {
+      if (cached) return cached;
+      throw error;
+    }
   }));
 });

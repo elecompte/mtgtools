@@ -1,5 +1,5 @@
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js').catch(console.error);
+  navigator.serviceWorker.register('/service-worker.js', {updateViaCache: 'none'}).catch(console.error);
 }
 
 if (document.body.classList.contains('tool') && new URLSearchParams(location.search).get('overlay') === '1') {
