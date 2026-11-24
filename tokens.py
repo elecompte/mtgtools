@@ -9,6 +9,7 @@ from flask import Blueprint, abort, jsonify, render_template, request
 tokens = Blueprint("tokens", __name__)
 TOKEN_TYPES = {
     "statue": {"name": "Statue", "plural": "Statues", "image": "/static/img/tiki-statues.png", "base": 1},
+    "gnome": {"name": "Gnome", "plural": "Gnomes", "image": "/static/img/gnomes.png", "base": 1},
     "thopter": {"name": "Thopter", "plural": "Thopters", "image": "/static/img/thopters.png", "base": 1},
 }
 

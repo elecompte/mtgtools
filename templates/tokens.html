@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Battlefield tokens{% endblock %}
 {% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-kill-12">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-gnomes-13">{% endblock %}
 {% block content %}
 {% if control %}
 <main class="library token-controls">
 <h1>Battlefield tokens</h1>
-<p>Statues are 1/1 Sculpture Treasure artifact creatures; Thopters are 1/1 artifact creatures with flying. Each type and power/toughness group shows ready, summoning-sick and tapped tokens. Buttons act on one token per click, or the whole P/T group when marked ALL. UNTAPPED means ready and untapped; SICK targets untapped sick tokens. TAPPED includes tapped sick tokens.</p>
+<p>Statues are 1/1 Sculpture Treasure artifact creatures; Thopters are 1/1 artifact creatures with flying. Gnomes start at 1/1. Each type and power/toughness group shows ready, summoning-sick and tapped tokens. Buttons act on one token per click, or the whole P/T group when marked ALL. UNTAPPED means ready and untapped; SICK targets untapped sick tokens. TAPPED includes tapped sick tokens.</p>
 <label for="token-url">OBS Browser Source · 1200 × 900 · 4:3</label>
 <input id="token-url" readonly onclick="this.select()">
 <form id="create-tokens" class="token-create">
@@ -51,5 +51,5 @@
 <div id="token-canvas"><div id="token-groups" aria-label="Battlefield tokens"></div></div>
 {% endif %}
 <script id="token-type-config" type="application/json">{{ token_types|tojson }}</script>
-<script src="/static/js/tokens.js?v=token-kill-12" defer></script>
+<script src="/static/js/tokens.js?v=token-gnomes-13" defer></script>
 {% endblock %}
