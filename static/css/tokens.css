@@ -1,0 +1,18 @@
+body.token-overlay, html:has(.token-overlay) { margin: 0; background: transparent; overflow: hidden; }
+.token-overlay nav { display: none; }
+#token-groups { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 18px; }
+.statue-group { display: flex; align-items: center; flex-direction: column; min-width: 0; padding: 14px; }
+.statue-art { position: relative; width: 125px; height: 125px; display: grid; place-items: center; }
+.statue-icon { width: 125px; height: 125px; object-fit: contain; filter: drop-shadow(0 3px 3px #000b); }
+.statue-art.tapped .statue-icon { transform: rotate(90deg); opacity: .7; }
+.statue-quantity { position: absolute; right: -15px; top: -4px; font-size: 30px; padding: 2px 10px; background: #221a30; color: #fff; border: 2px solid #c6a0ed; border-radius: 20px; }
+.statue-pt { font-size: 42px; color: white; line-height: 1.15; text-shadow: 0 2px 4px #000, 0 0 6px #000; }
+.statue-state, .statue-counters { color: white; background: #101919d9; border-radius: 6px; padding: 2px 6px; margin-top: 3px; font-size: 13px; }
+.token-overlay #token-groups { width: 1200px; transform-origin: top left; grid-template-columns: repeat(6,1fr); align-content: start; gap: 0; }
+.token-controls form, .token-controls .token-actions { padding: 16px; margin: 20px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.token-controls label { display: block; margin: 8px 0; }
+.token-controls input[type=number] { width: 100px; }
+.token-controls #token-url { width: min(100%,600px); }
+.token-controls button { min-height: 44px; padding: 8px 12px; margin: 3px; border: 1px solid #8563a3; background: #352844; color: #f3e6ff; border-radius: 8px; }
+.token-controls .statue-group { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.token-controls .group-controls { margin: 8px 0 0; padding: 8px; }

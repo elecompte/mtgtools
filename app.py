@@ -10,6 +10,8 @@ import requests
 
 
 app = Flask(__name__)
+from tokens import tokens
+app.register_blueprint(tokens)
 from watchlist import watchlist
 app.register_blueprint(watchlist)
 from obs import obs

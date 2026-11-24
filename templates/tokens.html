@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Statue tokens{% endblock %}
+{% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css">{% endblock %}
+{% block content %}
+{% if control %}
+<main class="library token-controls">
+<h1>Statue tokens</h1>
+<p>1/1 Sculpture Treasure artifact creatures. Groups share counters, tapped state and summoning sickness.</p>
+<label for="token-url">OBS Browser Source · 1200 × 600</label>
+<input id="token-url" readonly onclick="this.select()">
+<form id="create-tokens">
+<label>Tokens to create <input name="quantity" type="number" min="1" max="1000000" value="1" required></label>
+<label>Starting +1/+1 counters <input name="counters" type="number" min="0" max="1000000" value="0" required></label>
+<label><input name="crusade" type="checkbox"> Resolve Cathars’ Crusade for these arrivals</label>
+<small>Each new creature adds one trigger. All statues, including the new ones, get that many counters.</small>
+<button>Create statues</button>
+</form>
+<div class="token-actions">
+<label>Triggers / counters <input id="global-count" type="number" min="1" max="1000000" value="1"></label>
+<button data-action="all_counters">Add counters to all statues</button>
+<button data-action="next_turn">My next turn · untap & ready all</button>
+<button data-action="undo">Undo</button>
+<button data-action="clear">Clear battlefield</button>
+</div>
+<p>For Steel Overseer, tap Overseer in your game and add one counter to all statues here. For other creature arrivals, resolve their Crusade triggers with the counter control above.</p>
+<p id="token-status" role="status"></p>
+<div id="token-summary"></div>
+<div id="token-groups"></div>
+</main>
+{% else %}
+<div id="token-groups" aria-label="Statue tokens"></div>
+{% endif %}
+<script src="/static/js/tokens.js" defer></script>
+{% endblock %}
