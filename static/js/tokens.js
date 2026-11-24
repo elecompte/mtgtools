@@ -16,31 +16,38 @@ function renderTokens(state) {
     const card = tokenElement('section', null, 'statue-group');
     const members = state.groups.map((group, index) => ({group,index}))
       .filter(({group}) => group.counters === counters);
-    const total = members.reduce((sum, {group}) => sum + group.quantity, 0);
-    const heading = tokenElement('div', null, 'statue-heading');
-    heading.append(tokenElement('strong', (1 + counters) + '/' + (1 + counters), 'statue-pt'),
-      tokenElement('span', total + ' statues · +' + counters + ' counters', 'statue-counters'));
-    card.append(heading);
-    const lanes = tokenElement('div', null, 'statue-lanes');
-    for (const tapped of [false, true]) {
-      const lane = tokenElement('div', null, 'statue-lane');
-      const cohort = members.filter(({group}) => group.tapped === tapped);
+    const scene = tokenElement('div', null, 'statue-scene');
+    const management = tokenElement('details', null, 'statue-management');
+    management.append(tokenElement('summary', 'Manage ' + (1 + counters) + '/' + (1 + counters) + ' statues'));
+    const states = [
+      {key:'ready', label:'Ready', select:group => !group.tapped && !group.sick},
+      {key:'sick', label:'Summoning sick', select:group => !group.tapped && group.sick},
+      {key:'tapped', label:'Tapped', select:group => group.tapped}
+    ];
+    let visibleStates = 0;
+    for (const state of states) {
+      const cohort = members.filter(({group}) => state.select(group));
       const quantity = cohort.reduce((sum, {group}) => sum + group.quantity, 0);
-      const sick = cohort.filter(({group}) => group.sick).reduce((sum, {group}) => sum + group.quantity, 0);
-      const art = tokenElement('div', null, 'statue-art' + (tapped ? ' tapped' : '') + (quantity ? '' : ' empty'));
+      if (!quantity) continue;
+      visibleStates += 1;
+      const figure = tokenElement('div', null, 'statue-figure state-' + state.key);
+      const art = tokenElement('div', null, 'statue-art');
       const icon = tokenElement('span', null, 'statue-icon');
       const variant = counters % 8;
       icon.style.backgroundPosition = ((variant % 4) * 100 / 3) + '% ' + (Math.floor(variant / 4) * 100) + '%';
       icon.style.filter = 'hue-rotate(' + (Math.floor(counters / 8) * 47 % 360) + 'deg)';
       icon.setAttribute('role', 'img');
       icon.setAttribute('aria-label', 'Tiki statue expression ' + (variant + 1));
-      art.append(icon, tokenElement('strong', '×' + quantity, 'statue-quantity'));
-      lane.append(tokenElement('strong', tapped ? 'Tapped' : 'Untapped', 'statue-state'), art,
-        tokenElement('span', (quantity - sick) + ' ready · ' + sick + ' sick', 'statue-state'));
+      art.append(icon, tokenElement('strong', quantity, 'statue-quantity'));
+      figure.append(art, tokenElement('span', state.label, 'statue-state'));
+      const tappedSick = cohort.filter(({group}) => group.tapped && group.sick)
+        .reduce((sum, {group}) => sum + group.quantity, 0);
+      if (tappedSick) figure.append(tokenElement('small', tappedSick + ' summoning sick', 'statue-state-note'));
+      scene.append(figure);
       cohort.forEach(({group, index}) => {
     if (tokenControl) {
       const form = tokenElement('form', null, 'group-controls');
-      const label = tokenElement('label', (group.sick ? 'Sick' : 'Ready') + ' · apply to ');
+      const label = tokenElement('label', (group.tapped ? 'Tapped' : 'Untapped') + (group.sick ? ' · sick' : ' · ready') + ' · apply to ');
       const qty = tokenElement('input');
       Object.assign(qty, {type:'number',min:'1',max:String(group.quantity),value:String(group.quantity),required:true});
       label.append(qty, ' tokens');
@@ -59,13 +66,17 @@ function renderTokens(state) {
         event.preventDefault();
         sendTokenAction({action:event.submitter.value, index, group, quantity:Number(qty.value)});
       });
-      lane.append(form);
+      management.append(form);
     }
 
+
       });
-      lanes.append(lane);
     }
-    card.append(lanes);
+    scene.dataset.count = visibleStates;
+    card.append(scene, tokenElement('strong', (1 + counters) + '/' + (1 + counters), 'statue-pt'));
+    if (tokenControl) {
+      card.append(tokenElement('small', '+' + counters + ' counters', 'statue-counters'), management);
+    }
     tokenGroups.append(card);
   });
   if (!tokenControl) fitTokenBoard();

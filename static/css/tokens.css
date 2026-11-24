@@ -1,36 +1,32 @@
 body.token-overlay, html:has(.token-overlay) { margin: 0; background: transparent; overflow: hidden; }
 .token-overlay nav { display: none; }
-#token-groups { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 18px; }
-.statue-group { display: flex; align-items: center; flex-direction: column; min-width: 0; padding: 14px; }
-.statue-art { position: relative; width: 125px; height: 125px; display: grid; place-items: center; }
-.statue-icon { width: 125px; height: 125px; object-fit: contain; filter: drop-shadow(0 3px 3px #000b); }
-.statue-art.tapped .statue-icon { transform: rotate(90deg); opacity: .7; }
-.statue-quantity { position: absolute; right: -15px; top: -4px; font-size: 30px; padding: 2px 10px; background: #221a30; color: #fff; border: 2px solid #c6a0ed; border-radius: 20px; }
-.statue-pt { font-size: 42px; color: white; line-height: 1.15; text-shadow: 0 2px 4px #000, 0 0 6px #000; }
-.statue-state, .statue-counters { color: white; background: #101919d9; border-radius: 6px; padding: 2px 6px; margin-top: 3px; font-size: 13px; }
-.token-overlay #token-groups { width: 1200px; transform-origin: top left; grid-template-columns: repeat(6,1fr); align-content: start; gap: 0; }
+#token-groups { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,340px),1fr)); gap: 18px; }
+.statue-group { display: flex; align-items: center; flex-direction: column; min-width: 0; padding: 10px; }
+.statue-scene { width: 100%; max-width: 400px; aspect-ratio: 1; position: relative; }
+.statue-figure { position: absolute; display: flex; align-items: center; flex-direction: column; text-align: center; }
+.state-ready { width: 55%; left: 0; top: 22%; }
+.state-sick { width: 38%; right: 3%; top: 1%; }
+.state-tapped { width: 43%; right: 0; top: 49%; }
+.statue-art { position: relative; width: 100%; aspect-ratio: 1; }
+.statue-icon { position: absolute; inset: 0; display: block; background: url('/static/img/tiki-statues.png') no-repeat; background-size: 400% 200%; }
+.state-tapped .statue-icon { transform: rotate(90deg); }
+.state-sick .statue-icon { opacity: .4; }
+.statue-quantity { position: absolute; right: 0; top: 0; display: grid; place-items: center; min-width: 1.45em; height: 1.45em; padding: 0 .15em; border-radius: 50%; background: linear-gradient(#353535,#141414); border: 2px solid #d1ccbf; color: #fff9e9; font-size: clamp(24px,4vw,42px); font-weight: 800; line-height: 1; box-shadow: 0 3px 4px #0008; }
+.state-ready .statue-quantity { font-size: clamp(32px,5vw,56px); }
+.statue-state { color: #fff7e6; font-weight: 750; font-size: clamp(13px,2vw,20px); line-height: 1.2; text-shadow: -1px -1px 1px #16120f,1px 1px 1px #16120f,0 2px 4px #000; }
+.statue-state-note { color: #fff7e6; background: #16120fcc; padding: 1px 4px; border-radius: 4px; font-size: 11px; }
+.statue-pt { color: #fff7e6; font-size: clamp(42px,7vw,70px); line-height: 1; text-align: center; text-shadow: -2px -2px 1px #16120f,2px 2px 1px #16120f,0 3px 5px #000; margin-top: -12px; }
+.statue-scene[data-count="1"] .statue-figure { width: 65%; left: 17.5%; right: auto; top: 12%; }
+.statue-scene[data-count="1"] .state-tapped { width: 60%; left: 20%; top: 15%; }
+.statue-counters { color: var(--muted); margin-top: 8px; }
+.token-overlay #token-groups { width: 1200px; transform-origin: top left; align-content: start; gap: 0; }
+.token-overlay .statue-group { background: transparent; border: 0; }
 .token-controls form, .token-controls .token-actions { padding: 16px; margin: 20px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
 .token-controls label { display: block; margin: 8px 0; }
-.token-controls input[type=number] { width: 100px; }
+.token-controls input[type=number] { width: 100px; max-width: 100%; }
 .token-controls #token-url { width: min(100%,600px); }
 .token-controls button { min-height: 44px; padding: 8px 12px; margin: 3px; border: 1px solid #8563a3; background: #352844; color: #f3e6ff; border-radius: 8px; }
-.token-controls .statue-group { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
-.token-controls .group-controls { margin: 8px 0 0; padding: 8px; }
-
-#token-groups { grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); }
-.statue-group { align-items: stretch; gap: 8px; }
-.statue-heading { display: flex; gap: 12px; align-items: center; justify-content: center; }
-.statue-lanes { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
-.statue-lane { display: flex; flex-direction: column; align-items: center; min-width: 0; gap: 4px; }
-.statue-lane + .statue-lane { border-left: 1px solid #ffffff35; }
-.statue-icon { display: block; background: url('/static/img/tiki-statues.png') no-repeat; background-size: 400% 200%; }
-.statue-art.empty { opacity: .3; }
-.token-overlay .statue-group { border: 1px solid #ffffff35; border-radius: 16px; background: #15101b66; margin: 6px; }
-.token-overlay .statue-heading { margin-bottom: 6px; }
-.token-overlay .statue-counters { font-size: 14px; }
-.token-controls .group-controls { width: 100%; }
-.token-controls .group-controls input { max-width: 100%; }
-@media(max-width: 450px) {
-  .token-controls .group-controls button { width: 100%; margin: 3px 0; }
-  .statue-quantity { right: -4px; }
-}
+.token-controls .statue-group { border: 1px solid var(--line); border-radius: 12px; }
+.statue-management { align-self: stretch; margin-top: 12px; }
+.statue-management summary { color: #dcc4f4; cursor: pointer; padding: 10px; }
+.token-controls .group-controls { margin: 8px 0; padding: 10px; }
