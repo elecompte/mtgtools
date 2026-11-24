@@ -8,6 +8,28 @@ function tokenElement(tag, text, className) {
   if (className) el.className = className;
   return el;
 }
+// Statuses combine with OR; types narrow that selection. Keep choices across polls.
+const tokenStatuses = new Set(['all']);
+const tokenTypes = new Set(['statue']);
+function bulkMatches(group, operation) {
+  return tokenTypes.has('statue') && (tokenStatuses.has('all') || tokenStatuses.has(group.tapped ? 'tapped' : 'untapped')) &&
+    (operation !== 'tap' || !group.tapped) && (operation !== 'untap' || group.tapped);
+}
+function updateBulkControls() {
+  document.querySelectorAll('[data-filter]').forEach(button => {
+    const selected = button.dataset.filter === 'all'
+      ? tokenStatuses.has('all') && [...document.querySelectorAll('[data-token-type]')].every(chip => tokenTypes.has(chip.dataset.tokenType))
+      : tokenStatuses.has(button.dataset.filter);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  document.querySelectorAll('[data-token-type]').forEach(button =>
+    button.setAttribute('aria-pressed', String(tokenTypes.has(button.dataset.tokenType))));
+  document.querySelectorAll('[data-bulk]').forEach(button => {
+    button.disabled = !tokenState.groups.some(group => bulkMatches(group, button.dataset.bulk));
+  });
+  const count = tokenState.groups.filter(group => bulkMatches(group)).reduce((sum, group) => sum + group.quantity, 0);
+  document.querySelector('#token-selected-count').textContent = count + ' selected';
+}
 function renderTokens(state) {
   tokenState = state;
   tokenGroups.replaceChildren();
@@ -91,6 +113,7 @@ function renderTokens(state) {
       sum(g=>g.tapped) + ' tapped · ' + sum(g=>g.sick) + ' sick · ' +
       sum(g=>!g.sick) + ' ready · ' + sum(g=>g.counters>0) + ' with counters';
     document.querySelector('[data-action=undo]').disabled = !state.can_undo;
+    updateBulkControls();
   }
 }
 let tokenActionQueue = Promise.resolve();
@@ -113,16 +136,42 @@ async function performTokenAction(action) {
   } finally { busy = false; }
 }
 if (tokenControl) {
-  document.querySelector('#create-tokens').addEventListener('submit', event => {
-    event.preventDefault();
-    const form = event.target;
-    sendTokenAction({action:'create', quantity:Number(form.elements.quantity.value),
-      counters:Number(form.elements.counters.value), crusade:form.elements.crusade.checked});
+  const createForm = document.querySelector('#create-tokens');
+  const crusade = document.querySelector('#crusade-toggle');
+  crusade.addEventListener('click', () => {
+    crusade.setAttribute('aria-pressed', String(crusade.getAttribute('aria-pressed') !== 'true'));
   });
-  document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
-    if (button.dataset.action === 'clear' && !confirm('Clear all statues from the battlefield?')) return;
-    sendTokenAction({action:button.dataset.action, quantity:Number(document.querySelector('#global-count').value)});
+  document.querySelectorAll('[data-step]').forEach(button => button.addEventListener('click', () => {
+    const input = createForm.elements.quantity;
+    const current = Number(input.value);
+    input.value = Math.max(1, Math.min(1000000, (Number.isFinite(current) ? current : 1) + Number(button.dataset.step)));
   }));
+  createForm.addEventListener('submit', event => {
+    event.preventDefault();
+    sendTokenAction({action:'create', quantity:Number(createForm.elements.quantity.value),
+      crusade:crusade.getAttribute('aria-pressed') === 'true'});
+  });
+  document.querySelectorAll('[data-filter], [data-token-type]').forEach(button => button.addEventListener('click', () => {
+    if (button.dataset.filter === 'all') {
+      tokenStatuses.clear();
+      tokenStatuses.add('all');
+      document.querySelectorAll('[data-token-type]').forEach(chip => tokenTypes.add(chip.dataset.tokenType));
+    } else {
+      const set = button.dataset.tokenType ? tokenTypes : tokenStatuses;
+      const key = button.dataset.tokenType || button.dataset.filter;
+      if (set === tokenStatuses) set.delete('all');
+      if (set.has(key)) set.delete(key); else set.add(key);
+    }
+    updateBulkControls();
+  }));
+  document.querySelectorAll('[data-bulk]').forEach(button => button.addEventListener('click', () => {
+    sendTokenAction({action:'bulk_action', operation:button.dataset.bulk,
+      statuses:tokenStatuses.has('all') ? ['tapped', 'untapped'] : [...tokenStatuses], types:[...tokenTypes]});
+  }));
+  document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
+    sendTokenAction({action:button.dataset.action});
+  }));
+  updateBulkControls();
 }
 async function pollTokens() {
   const version = writeVersion;

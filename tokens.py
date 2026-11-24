@@ -58,6 +58,36 @@ def state():
                         group["counters"] += quantity
                     elif action == "next_turn":
                         group.update(tapped=False, sick=False)
+            elif action == "bulk_action":
+                operation = data.get("operation")
+                statuses = data.get("statuses")
+                types = data.get("types")
+                if (operation not in {"tap", "untap", "kill", "counter"}
+                        or not isinstance(statuses, list) or not isinstance(types, list)
+                        or any(status not in ("tapped", "untapped") for status in statuses)
+                        or any(kind != "statue" for kind in types)):
+                    abort(400)
+                changed = False
+                remaining = []
+                for group in groups:
+                    status = "tapped" if group["tapped"] else "untapped"
+                    eligible = "statue" in types and status in statuses
+                    if operation == "tap":
+                        eligible = eligible and not group["tapped"]
+                    elif operation == "untap":
+                        eligible = eligible and group["tapped"]
+                    if eligible:
+                        changed = True
+                        if operation == "kill":
+                            continue
+                        if operation == "counter":
+                            group["counters"] += 1
+                        else:
+                            group["tapped"] = operation == "tap"
+                    remaining.append(group)
+                if not changed:
+                    abort(409)
+                groups = remaining
             elif action == "group_action":
                 counters = number(data, "counters", 0)
                 operation = data.get("operation")

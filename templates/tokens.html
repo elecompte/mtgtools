@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Statue tokens{% endblock %}
 {% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=bulk-controls-6">{% endblock %}
 {% block content %}
 {% if control %}
 <main class="library token-controls">
@@ -9,21 +9,34 @@
 <p>1/1 Sculpture Treasure artifact creatures. Each power/toughness group shows ready, summoning-sick and tapped statues. Buttons act on one token per click, or the whole P/T group when marked ALL. UNTAPPED means ready and untapped; SICK counters target untapped sick tokens. KILL and KILL SICK also include tapped tokens.</p>
 <label for="token-url">OBS Browser Source · 1200 × 600</label>
 <input id="token-url" readonly onclick="this.select()">
-<form id="create-tokens">
-<label>Tokens to create <input name="quantity" type="number" min="1" max="1000000" value="1" required></label>
-<label>Starting +1/+1 counters <input name="counters" type="number" min="0" max="1000000" value="0" required></label>
-<label><input name="crusade" type="checkbox"> Resolve Cathars’ Crusade for these arrivals</label>
-<small>Each new creature adds one trigger. All statues, including the new ones, get that many counters.</small>
-<button>Create statues</button>
-</form>
-<div class="token-actions">
-<label>Triggers / counters <input id="global-count" type="number" min="1" max="1000000" value="1"></label>
-<button data-action="all_counters">Add counters to all statues</button>
-<button data-action="next_turn">My next turn · untap & ready all</button>
-<button data-action="undo">Undo</button>
-<button data-action="clear">Clear battlefield</button>
+<form id="create-tokens" class="token-create">
+<button type="submit">CREATE</button>
+<div class="token-stepper">
+<button type="button" data-step="-1" aria-label="Create fewer tokens">−</button>
+<input name="quantity" aria-label="Number of tokens to create" type="number" min="1" max="1000000" value="1" required>
+<button type="button" data-step="1" aria-label="Create more tokens">+</button>
 </div>
-<p>For Steel Overseer, tap Overseer in your game and add one counter to all statues here. For other creature arrivals, resolve their Crusade triggers with the counter control above.</p>
+<button type="button" id="crusade-toggle" aria-pressed="false" title="Each new statue adds a Crusade trigger, giving all statues that many counters">Cathars’ Crusade</button>
+</form>
+<section class="token-actions" aria-label="Actions on selected tokens">
+<div class="token-filter-chips" role="group" aria-label="Token selection">
+<button type="button" data-filter="all" aria-pressed="true">All</button>
+<button type="button" data-filter="tapped" aria-pressed="false">Tapped</button>
+<button type="button" data-filter="untapped" aria-pressed="false">Untapped</button>
+<button type="button" data-token-type="statue" aria-pressed="true">Statues</button>
+</div>
+<p class="token-selection-hint">Combine statuses and token types. Untapped includes summoning-sick tokens. <span id="token-selected-count" role="status"></span></p>
+<div class="token-bulk-buttons">
+<button type="button" data-bulk="counter">ADD COUNTER</button>
+<button type="button" data-bulk="tap">TAP</button>
+<button type="button" data-bulk="untap">UNTAP</button>
+<button type="button" data-bulk="kill">KILL</button>
+</div>
+</section>
+<div class="token-utilities">
+<button type="button" data-action="next_turn">Next turn · untap & ready all</button>
+<button type="button" data-action="undo">Undo</button>
+</div>
 <p id="token-status" role="status"></p>
 <div id="token-summary"></div>
 <div id="token-groups"></div>
@@ -31,5 +44,5 @@
 {% else %}
 <div id="token-groups" aria-label="Statue tokens"></div>
 {% endif %}
-<script src="/static/js/tokens.js?v=group-buttons-5" defer></script>
+<script src="/static/js/tokens.js?v=bulk-controls-6" defer></script>
 {% endblock %}
