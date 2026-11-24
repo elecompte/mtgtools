@@ -11,19 +11,36 @@ function tokenElement(tag, text, className) {
 function renderTokens(state) {
   tokenState = state;
   tokenGroups.replaceChildren();
-  state.groups.forEach((group, index) => {
+  const powers = [...new Set(state.groups.map(group => group.counters))];
+  powers.forEach(counters => {
     const card = tokenElement('section', null, 'statue-group');
-    const art = tokenElement('div', null, 'statue-art' + (group.tapped ? ' tapped' : ''));
-    const icon = tokenElement('img', null, 'statue-icon');
-    icon.src = '/static/img/statue-token.png';
-    icon.alt = 'Stone statue';
-    art.append(icon, tokenElement('strong', '×' + group.quantity, 'statue-quantity'));
-    card.append(art, tokenElement('strong', (1 + group.counters) + '/' + (1 + group.counters), 'statue-pt'));
-    card.append(tokenElement('span', '+' + group.counters + ' counters', 'statue-counters'));
-    card.append(tokenElement('span', (group.tapped ? 'Tapped' : 'Untapped') + ' · ' + (group.sick ? 'Summoning sick' : 'Ready'), 'statue-state'));
+    const members = state.groups.map((group, index) => ({group,index}))
+      .filter(({group}) => group.counters === counters);
+    const total = members.reduce((sum, {group}) => sum + group.quantity, 0);
+    const heading = tokenElement('div', null, 'statue-heading');
+    heading.append(tokenElement('strong', (1 + counters) + '/' + (1 + counters), 'statue-pt'),
+      tokenElement('span', total + ' statues · +' + counters + ' counters', 'statue-counters'));
+    card.append(heading);
+    const lanes = tokenElement('div', null, 'statue-lanes');
+    for (const tapped of [false, true]) {
+      const lane = tokenElement('div', null, 'statue-lane');
+      const cohort = members.filter(({group}) => group.tapped === tapped);
+      const quantity = cohort.reduce((sum, {group}) => sum + group.quantity, 0);
+      const sick = cohort.filter(({group}) => group.sick).reduce((sum, {group}) => sum + group.quantity, 0);
+      const art = tokenElement('div', null, 'statue-art' + (tapped ? ' tapped' : '') + (quantity ? '' : ' empty'));
+      const icon = tokenElement('span', null, 'statue-icon');
+      const variant = counters % 8;
+      icon.style.backgroundPosition = ((variant % 4) * 100 / 3) + '% ' + (Math.floor(variant / 4) * 100) + '%';
+      icon.style.filter = 'hue-rotate(' + (Math.floor(counters / 8) * 47 % 360) + 'deg)';
+      icon.setAttribute('role', 'img');
+      icon.setAttribute('aria-label', 'Tiki statue expression ' + (variant + 1));
+      art.append(icon, tokenElement('strong', '×' + quantity, 'statue-quantity'));
+      lane.append(tokenElement('strong', tapped ? 'Tapped' : 'Untapped', 'statue-state'), art,
+        tokenElement('span', (quantity - sick) + ' ready · ' + sick + ' sick', 'statue-state'));
+      cohort.forEach(({group, index}) => {
     if (tokenControl) {
       const form = tokenElement('form', null, 'group-controls');
-      const label = tokenElement('label', 'Apply to ');
+      const label = tokenElement('label', (group.sick ? 'Sick' : 'Ready') + ' · apply to ');
       const qty = tokenElement('input');
       Object.assign(qty, {type:'number',min:'1',max:String(group.quantity),value:String(group.quantity),required:true});
       label.append(qty, ' tokens');
@@ -42,8 +59,13 @@ function renderTokens(state) {
         event.preventDefault();
         sendTokenAction({action:event.submitter.value, index, group, quantity:Number(qty.value)});
       });
-      card.append(form);
+      lane.append(form);
     }
+
+      });
+      lanes.append(lane);
+    }
+    card.append(lanes);
     tokenGroups.append(card);
   });
   if (!tokenControl) fitTokenBoard();
@@ -98,11 +120,11 @@ pollTokens();
 
 
 function fitTokenBoard() {
-  const columns = Math.max(1, Math.min(6, tokenState.groups.length));
-  const rows = Math.max(1, Math.ceil(tokenState.groups.length / columns));
-  const scale = Math.min(innerWidth / (columns * 200), innerHeight / (rows * 260), 1);
-  tokenGroups.style.width = (columns * 200) + 'px';
+  const count = new Set(tokenState.groups.map(group => group.counters)).size;
+  const columns = Math.max(1, Math.min(3, count));
+  tokenGroups.style.width = (columns * 400) + 'px';
   tokenGroups.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';
+  const scale = Math.min(innerWidth / (columns * 400), innerHeight / Math.max(tokenGroups.scrollHeight, 1), 1);
   tokenGroups.style.transform = 'scale(' + scale + ')';
 }
 if (!tokenControl) addEventListener('resize', fitTokenBoard);
