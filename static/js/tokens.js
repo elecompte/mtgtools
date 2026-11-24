@@ -38,11 +38,13 @@ function renderTokens(state) {
       icon.style.filter = 'hue-rotate(' + (Math.floor(counters / 8) * 47 % 360) + 'deg)';
       icon.setAttribute('role', 'img');
       icon.setAttribute('aria-label', 'Tiki statue expression ' + (variant + 1));
-      art.append(icon, tokenElement('strong', quantity, 'statue-quantity'));
-      figure.append(art, tokenElement('span', state.label, 'statue-state'));
-      const tappedSick = cohort.filter(({group}) => group.tapped && group.sick)
-        .reduce((sum, {group}) => sum + group.quantity, 0);
-      if (tappedSick) figure.append(tokenElement('small', tappedSick + ' summoning sick', 'statue-state-note'));
+      const badge = tokenElement('strong', quantity, 'statue-quantity');
+      const digits = String(quantity).length;
+      badge.style.fontSize = 'clamp(24px, ' + Math.min(16, 32 / digits) + 'cqw, 64px)';
+      art.append(icon, badge);
+      figure.append(art);
+      figure.setAttribute('aria-label', quantity + ' ' + state.label + ' statues, ' +
+        (1 + counters) + '/' + (1 + counters));
       scene.append(figure);
       cohort.forEach(({group, index}) => {
     if (tokenControl) {
