@@ -90,9 +90,10 @@ function renderTokens(state) {
       scene.append(figure);
     }
     scene.dataset.count = visibleStates;
-    card.append(scene, tokenElement('strong', (definition.base + counters) + '/' + (definition.base + counters), 'statue-pt'));
+    const visual = tokenElement('div', null, 'token-group-visual');
+    visual.append(scene, tokenElement('strong', (definition.base + counters) + '/' + (definition.base + counters), 'statue-pt'));
+    card.append(tokenElement('strong', definition.name, 'token-group-name'), visual);
     if (tokenControl) {
-      card.prepend(tokenElement('strong', definition.plural, 'token-group-name'));
       const rows = [
         [['tap','ready',false,'TAP'],['tap','sick',false,'TAP SICK'],['tap','all',true,'TAP ALL']],
         [['untap','ready',false,'UNTAP'],['untap','sick',false,'UNTAP SICK'],['untap','all',true,'UNTAP ALL']],
