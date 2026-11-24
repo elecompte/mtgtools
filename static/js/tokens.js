@@ -77,7 +77,7 @@ function renderTokens(state) {
       icon.style.backgroundImage = 'url("' + definition.image + '")';
       const variant = counters % 8;
       icon.style.backgroundPosition = ((variant % 4) * 100 / 3) + '% ' + (Math.floor(variant / 4) * 100) + '%';
-      icon.style.filter = 'hue-rotate(' + (Math.floor(counters / 8) * 47 % 360) + 'deg)';
+      icon.style.filter = 'hue-rotate(' + (Math.floor(counters / 8) * 47 % 360) + 'deg) drop-shadow(0 2px 2px #000a) drop-shadow(0 4px 5px #0009)';
       icon.setAttribute('role', 'img');
       icon.setAttribute('aria-label', definition.name + ' variant ' + (variant + 1));
       const badge = tokenElement('strong', quantity, 'statue-quantity');
