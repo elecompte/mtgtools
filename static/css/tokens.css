@@ -69,3 +69,7 @@ body.token-overlay, html:has(.token-overlay) { margin: 0; background: transparen
   .token-bulk-buttons { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .token-controls .token-create { gap: 10px; }
 }
+
+.token-create-types { flex-basis: 100%; }
+.token-group-name { color: var(--muted); font-size: .9rem; margin: 4px 0; }
+#bulk-token-types { display: contents; }

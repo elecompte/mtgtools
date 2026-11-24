@@ -1,5 +1,7 @@
 const tokenControl = document.body.classList.contains('token-control');
 const tokenGroups = document.querySelector('#token-groups');
+const tokenDefinitions = JSON.parse(document.querySelector('#token-type-config').textContent);
+const groupType = group => group.type || 'statue';
 let tokenState = {groups:[]}, busy = false, writeVersion = 0;
 if (tokenControl) document.querySelector('#token-url').value = location.origin + '/obs/tokens';
 function tokenElement(tag, text, className) {
@@ -10,10 +12,27 @@ function tokenElement(tag, text, className) {
 }
 // Statuses combine with OR; types narrow that selection. Keep choices across polls.
 const tokenStatuses = new Set(['all']);
-const tokenTypes = new Set(['statue']);
+const tokenTypes = new Set(Object.keys(tokenDefinitions));
+const createTypes = new Set(['statue']);
 function bulkMatches(group, operation) {
-  return tokenTypes.has('statue') && (tokenStatuses.has('all') || tokenStatuses.has(group.tapped ? 'tapped' : 'untapped')) &&
+  return tokenTypes.has(groupType(group)) && (tokenStatuses.has('all') || tokenStatuses.has(group.tapped ? 'tapped' : 'untapped')) &&
     (operation !== 'tap' || !group.tapped) && (operation !== 'untap' || group.tapped);
+}
+function renderBulkTypeChips() {
+  const host = document.querySelector('#bulk-token-types');
+  host.replaceChildren();
+  const present = new Set(tokenState.groups.filter(group => group.quantity > 0).map(groupType));
+  Object.entries(tokenDefinitions).forEach(([kind, definition]) => {
+    if (!present.has(kind)) return;
+    const button = tokenElement('button', definition.name);
+    button.type = 'button';
+    button.dataset.tokenType = kind;
+    button.addEventListener('click', () => {
+      if (tokenTypes.has(kind)) tokenTypes.delete(kind); else tokenTypes.add(kind);
+      updateBulkControls();
+    });
+    host.append(button);
+  });
 }
 function updateBulkControls() {
   document.querySelectorAll('[data-filter]').forEach(button => {
@@ -33,11 +52,12 @@ function updateBulkControls() {
 function renderTokens(state) {
   tokenState = state;
   tokenGroups.replaceChildren();
-  const powers = [...new Set(state.groups.map(group => group.counters))];
-  powers.forEach(counters => {
+  const powers = [...new Map(state.groups.map(group => [groupType(group) + ':' + group.counters, {kind:groupType(group), counters:group.counters}])).values()];
+  powers.forEach(({kind, counters}) => {
+    const definition = tokenDefinitions[kind];
     const card = tokenElement('section', null, 'statue-group');
     const members = state.groups.map((group, index) => ({group,index}))
-      .filter(({group}) => group.counters === counters);
+      .filter(({group}) => group.counters === counters && groupType(group) === kind);
     const scene = tokenElement('div', null, 'statue-scene');
     const management = tokenElement('div', null, 'statue-management');
     const states = [
@@ -54,23 +74,25 @@ function renderTokens(state) {
       const figure = tokenElement('div', null, 'statue-figure state-' + state.key);
       const art = tokenElement('div', null, 'statue-art');
       const icon = tokenElement('span', null, 'statue-icon');
+      icon.style.backgroundImage = 'url("' + definition.image + '")';
       const variant = counters % 8;
       icon.style.backgroundPosition = ((variant % 4) * 100 / 3) + '% ' + (Math.floor(variant / 4) * 100) + '%';
       icon.style.filter = 'hue-rotate(' + (Math.floor(counters / 8) * 47 % 360) + 'deg)';
       icon.setAttribute('role', 'img');
-      icon.setAttribute('aria-label', 'Tiki statue expression ' + (variant + 1));
+      icon.setAttribute('aria-label', definition.name + ' variant ' + (variant + 1));
       const badge = tokenElement('strong', quantity, 'statue-quantity');
       const digits = String(quantity).length;
       badge.style.fontSize = 'clamp(24px, ' + Math.min(16, 32 / digits) + 'cqw, 64px)';
       art.append(icon, badge);
       figure.append(art);
-      figure.setAttribute('aria-label', quantity + ' ' + state.label + ' statues, ' +
-        (1 + counters) + '/' + (1 + counters));
+      figure.setAttribute('aria-label', quantity + ' ' + state.label + ' ' + definition.plural + ', ' +
+        (definition.base + counters) + '/' + (definition.base + counters));
       scene.append(figure);
     }
     scene.dataset.count = visibleStates;
-    card.append(scene, tokenElement('strong', (1 + counters) + '/' + (1 + counters), 'statue-pt'));
+    card.append(scene, tokenElement('strong', (definition.base + counters) + '/' + (definition.base + counters), 'statue-pt'));
     if (tokenControl) {
+      card.prepend(tokenElement('strong', definition.plural, 'token-group-name'));
       const rows = [
         [['tap','ready',false,'TAP'],['tap','sick',false,'TAP SICK'],['tap','all',true,'TAP ALL']],
         [['untap','ready',false,'UNTAP'],['untap','sick',false,'UNTAP SICK'],['untap','all',true,'UNTAP ALL']],
@@ -93,9 +115,9 @@ function renderTokens(state) {
           const button = tokenElement('button', text);
           button.type = 'button';
           button.disabled = !eligible;
-          button.title = (all ? 'All eligible statues' : 'One statue') + ' in this P/T group';
+          button.title = (all ? 'All eligible ' + definition.plural : 'One ' + definition.name) + ' in this P/T group';
           button.addEventListener('click', () => sendTokenAction({
-            action:'group_action', counters, operation, target, all
+            action:'group_action', type:kind, counters, operation, target, all
           }));
           row.append(button);
         });
@@ -113,6 +135,7 @@ function renderTokens(state) {
       sum(g=>g.tapped) + ' tapped · ' + sum(g=>g.sick) + ' sick · ' +
       sum(g=>!g.sick) + ' ready · ' + sum(g=>g.counters>0) + ' with counters';
     document.querySelector('[data-action=undo]').disabled = !state.can_undo;
+    renderBulkTypeChips();
     updateBulkControls();
   }
 }
@@ -138,6 +161,12 @@ async function performTokenAction(action) {
 if (tokenControl) {
   const createForm = document.querySelector('#create-tokens');
   const crusade = document.querySelector('#crusade-toggle');
+  document.querySelectorAll('[data-create-type]').forEach(button => button.addEventListener('click', () => {
+    const kind = button.dataset.createType;
+    if (createTypes.has(kind)) createTypes.delete(kind); else createTypes.add(kind);
+    button.setAttribute('aria-pressed', String(createTypes.has(kind)));
+    document.querySelector('#create-token-button').disabled = !createTypes.size;
+  }));
   crusade.addEventListener('click', () => {
     crusade.setAttribute('aria-pressed', String(crusade.getAttribute('aria-pressed') !== 'true'));
   });
@@ -148,10 +177,11 @@ if (tokenControl) {
   }));
   createForm.addEventListener('submit', event => {
     event.preventDefault();
-    sendTokenAction({action:'create', quantity:Number(createForm.elements.quantity.value),
+    if (!createTypes.size) return;
+    sendTokenAction({action:'create', types:[...createTypes], quantity:Number(createForm.elements.quantity.value),
       crusade:crusade.getAttribute('aria-pressed') === 'true'});
   });
-  document.querySelectorAll('[data-filter], [data-token-type]').forEach(button => button.addEventListener('click', () => {
+  document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
     if (button.dataset.filter === 'all') {
       tokenStatuses.clear();
       tokenStatuses.add('all');
@@ -171,6 +201,7 @@ if (tokenControl) {
   document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
     sendTokenAction({action:button.dataset.action});
   }));
+  renderBulkTypeChips();
   updateBulkControls();
 }
 async function pollTokens() {
@@ -188,7 +219,7 @@ pollTokens();
 
 
 function fitTokenBoard() {
-  const count = new Set(tokenState.groups.map(group => group.counters)).size;
+  const count = new Set(tokenState.groups.map(group => groupType(group) + ':' + group.counters)).size;
   const columns = Math.max(1, Math.min(3, count));
   tokenGroups.style.width = (columns * 400) + 'px';
   tokenGroups.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';

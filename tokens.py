@@ -7,12 +7,24 @@ import sqlite3
 from flask import Blueprint, abort, jsonify, render_template, request
 
 tokens = Blueprint("tokens", __name__)
+TOKEN_TYPES = {
+    "statue": {"name": "Statue", "plural": "Statues", "image": "/static/img/tiki-statues.png", "base": 1},
+    "thopter": {"name": "Thopter", "plural": "Thopters", "image": "/static/img/thopters.png", "base": 1},
+}
+
+
+def selected_types(data):
+    kinds = data.get("types", ["statue"])
+    if not isinstance(kinds, list) or not kinds or any(not isinstance(kind, str) or kind not in TOKEN_TYPES for kind in kinds):
+        abort(400)
+    return list(dict.fromkeys(kinds))
+
 
 
 @tokens.get("/tokens")
 @tokens.get("/obs/tokens")
 def page():
-    return render_template("tokens.html", control=request.path == "/tokens")
+    return render_template("tokens.html", control=request.path == "/tokens", token_types=TOKEN_TYPES)
 
 
 def number(data, key, default=1):
@@ -46,10 +58,14 @@ def state():
                     groups = frame["history"].pop()
             elif action == "create":
                 counters = number(data, "counters", 0)
-                groups.append({"quantity": quantity, "counters": counters, "tapped": False, "sick": True})
+                kinds = selected_types(data)
+                if quantity < 1:
+                    abort(400)
+                for kind in kinds:
+                    groups.append({"type": kind, "quantity": quantity, "counters": counters, "tapped": False, "sick": True})
                 if data.get("crusade"):
                     for group in groups:
-                        group["counters"] += quantity
+                        group["counters"] += quantity * len(kinds)
             elif action in {"all_counters", "next_turn", "clear"}:
                 if action == "clear":
                     groups = []
@@ -65,13 +81,13 @@ def state():
                 if (operation not in {"tap", "untap", "kill", "counter"}
                         or not isinstance(statuses, list) or not isinstance(types, list)
                         or any(status not in ("tapped", "untapped") for status in statuses)
-                        or any(kind != "statue" for kind in types)):
+                        or any(not isinstance(kind, str) or kind not in TOKEN_TYPES for kind in types)):
                     abort(400)
                 changed = False
                 remaining = []
                 for group in groups:
                     status = "tapped" if group["tapped"] else "untapped"
-                    eligible = "statue" in types and status in statuses
+                    eligible = group.get("type", "statue") in types and status in statuses
                     if operation == "tap":
                         eligible = eligible and not group["tapped"]
                     elif operation == "untap":
@@ -92,6 +108,9 @@ def state():
                 counters = number(data, "counters", 0)
                 operation = data.get("operation")
                 target = data.get("target")
+                kind = data.get("type", "statue")
+                if not isinstance(kind, str) or kind not in TOKEN_TYPES:
+                    abort(400)
                 all_tokens = data.get("all") is True
                 if operation not in {"tap", "untap", "kill", "counter"} or target not in {"ready", "sick", "untapped", "tapped", "all"}:
                     abort(400)
@@ -99,7 +118,7 @@ def state():
                 remaining = []
                 changed = []
                 for group in groups:
-                    eligible = group["counters"] == counters
+                    eligible = group["counters"] == counters and group.get("type", "statue") == kind
                     if operation == "tap":
                         eligible = eligible and not group["tapped"]
                     elif operation == "untap":
@@ -161,12 +180,12 @@ def state():
             for group in groups:
                 if not group["quantity"]:
                     continue
-                key = (group["counters"], group["tapped"], group["sick"])
+                key = (group.get("type", "statue"), group["counters"], group["tapped"], group["sick"])
                 if key not in merged:
-                    merged[key] = dict(group)
+                    merged[key] = dict(group, type=key[0])
                 else:
                     merged[key]["quantity"] += group["quantity"]
-            groups = sorted(merged.values(), key=lambda g: (g["counters"], g["tapped"], g["sick"]))
+            groups = sorted(merged.values(), key=lambda g: (g.get("type", "statue"), g["counters"], g["tapped"], g["sick"]))
             if action != "undo":
                 frame["history"] = (frame["history"] + [previous])[-20:]
             frame["groups"] = groups
