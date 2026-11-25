@@ -77,3 +77,14 @@ body.token-overlay, html:has(.token-overlay) { margin: 0; background: transparen
 .statue-scene[data-count="1"] + .statue-pt { margin-top: -24cqw; }
 .token-group-name { color: #fff7e6; position: absolute; z-index: 2; top: -4cqw; left: 0; width: 100%; pointer-events: none; font: 900 clamp(32px,14cqw,56px)/1 system-ui,sans-serif; margin: 0; text-align: center; text-shadow: -1px -1px 1px #16120f,1px -1px 1px #16120f,-1px 1px 1px #16120f,1px 1px 1px #16120f,0 3px 4px #000d,0 5px 9px #0009; }
 #bulk-token-types { display: contents; }
+
+/* Let the largest figure's badge sit mostly beyond its upper corner. */
+.state-ready .statue-quantity,
+.statue-scene[data-count="1"] .statue-quantity {
+  transform: translate(65%, -65%);
+}
+.statue-scene:not(:has(.state-ready))[data-count="2"] .state-tapped .statue-quantity {
+  left: 0;
+  right: auto;
+  transform: translate(-65%, -65%);
+}
