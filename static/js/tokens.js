@@ -2,7 +2,7 @@ const tokenControl = document.body.classList.contains('token-control');
 const tokenGroups = document.querySelector('#token-groups');
 const tokenDefinitions = JSON.parse(document.querySelector('#token-type-config').textContent);
 const groupType = group => group.type || 'statue';
-let tokenState = {groups:[]}, busy = false, writeVersion = 0;
+let tokenState = {groups:[], buffs:[]}, busy = false, writeVersion = 0;
 if (tokenControl) document.querySelector('#token-url').value = location.origin + '/obs/tokens';
 function tokenElement(tag, text, className) {
   const el = document.createElement(tag);
@@ -14,6 +14,7 @@ function tokenElement(tag, text, className) {
 const tokenStatuses = new Set(['all']);
 const tokenTypes = new Set(Object.keys(tokenDefinitions));
 const createTypes = new Set(['statue']);
+const buffTypes = new Set(['statue']);
 function bulkMatches(group, operation) {
   return tokenTypes.has(groupType(group)) && (tokenStatuses.has('all') || tokenStatuses.has(group.tapped ? 'tapped' : 'untapped')) &&
     (operation !== 'tap' || !group.tapped) && (operation !== 'untap' || group.tapped);
@@ -49,6 +50,30 @@ function updateBulkControls() {
   const count = tokenState.groups.filter(group => bulkMatches(group)).reduce((sum, group) => sum + group.quantity, 0);
   document.querySelector('#token-selected-count').textContent = count + ' selected';
 }
+function tokenStats(group) {
+  const base = tokenDefinitions[groupType(group)].base + group.counters;
+  const buffs = (tokenState.buffs || []).filter(buff => buff.types.includes(groupType(group)));
+  return {
+    power:base + buffs.reduce((sum, buff) => sum + buff.power, 0),
+    toughness:base + buffs.reduce((sum, buff) => sum + buff.toughness, 0)
+  };
+}
+function renderBuffs() {
+  const host = document.querySelector('#token-buff-list');
+  host.replaceChildren();
+  if (!(tokenState.buffs || []).length) host.append(tokenElement('p', 'No static buffs', 'token-selection-hint'));
+  (tokenState.buffs || []).forEach(buff => {
+    const item = tokenElement('div', null, 'token-buff-item');
+    const names = buff.types.map(kind => tokenDefinitions[kind].name).join(', ');
+    item.append(tokenElement('strong', '+' + buff.power + '/+' + buff.toughness), tokenElement('span', names));
+    const remove = tokenElement('button', 'Remove');
+    remove.type = 'button';
+    remove.setAttribute('aria-label', 'Remove +' + buff.power + '/+' + buff.toughness + ' buff for ' + names);
+    remove.addEventListener('click', () => sendTokenAction({action:'remove_buff', id:buff.id}));
+    item.append(remove);
+    host.append(item);
+  });
+}
 function renderTokens(state) {
   tokenState = state;
   tokenGroups.replaceChildren();
@@ -58,6 +83,7 @@ function renderTokens(state) {
     const card = tokenElement('section', null, 'statue-group');
     const members = state.groups.map((group, index) => ({group,index}))
       .filter(({group}) => group.counters === counters && groupType(group) === kind);
+    const stats = tokenStats(members[0].group);
     const scene = tokenElement('div', null, 'statue-scene');
     const management = tokenElement('div', null, 'statue-management');
     const states = [
@@ -86,12 +112,12 @@ function renderTokens(state) {
       art.append(icon, badge);
       figure.append(art);
       figure.setAttribute('aria-label', quantity + ' ' + state.label + ' ' + definition.plural + ', ' +
-        (definition.base + counters) + '/' + (definition.base + counters));
+        stats.power + '/' + stats.toughness);
       scene.append(figure);
     }
     scene.dataset.count = visibleStates;
     const visual = tokenElement('div', null, 'token-group-visual');
-    visual.append(scene, tokenElement('strong', (definition.base + counters) + '/' + (definition.base + counters), 'statue-pt'));
+    visual.append(scene, tokenElement('strong', stats.power + '/' + stats.toughness, 'statue-pt'));
     visual.prepend(tokenElement('strong', definition.name, 'token-group-name'));
     card.append(visual);
     if (tokenControl) {
@@ -133,10 +159,11 @@ function renderTokens(state) {
   if (!tokenControl) fitTokenBoard();
   if (tokenControl) {
     const sum = predicate => state.groups.filter(predicate).reduce((n,g) => n+g.quantity,0);
-    document.querySelector('#token-summary').textContent =
-      sum(()=>true) + ' total · ' + sum(g=>!g.tapped) + ' untapped · ' +
-      sum(g=>g.tapped) + ' tapped · ' + sum(g=>g.sick) + ' sick · ' +
-      sum(g=>!g.sick) + ' ready · ' + sum(g=>g.counters>0) + ' with counters';
+    document.querySelector('#summary-tokens').textContent = sum(()=>true).toLocaleString();
+    document.querySelector('#summary-untapped').textContent = sum(g=>!g.tapped).toLocaleString();
+    document.querySelector('#summary-tapped').textContent = sum(g=>g.tapped).toLocaleString();
+    document.querySelector('#summary-power').textContent = state.groups.reduce((n,g) => n + g.quantity * tokenStats(g).power, 0).toLocaleString();
+    renderBuffs();
     document.querySelector('[data-action=undo]').disabled = !state.can_undo;
     renderBulkTypeChips();
     updateBulkControls();
@@ -162,6 +189,16 @@ async function performTokenAction(action) {
   } finally { busy = false; }
 }
 if (tokenControl) {
+  document.querySelectorAll('[data-buff-type]').forEach(button => button.addEventListener('click', () => {
+    const kind = button.dataset.buffType;
+    if (buffTypes.has(kind)) buffTypes.delete(kind); else buffTypes.add(kind);
+    button.setAttribute('aria-pressed', String(buffTypes.has(kind)));
+    document.querySelectorAll('[data-add-buff]').forEach(add => { add.disabled = !buffTypes.size; });
+  }));
+  document.querySelectorAll('[data-add-buff]').forEach(button => button.addEventListener('click', () => {
+    if (!buffTypes.size) return;
+    sendTokenAction({action:'add_buff', types:[...buffTypes], toughness:Number(button.dataset.addBuff)});
+  }));
   const createForm = document.querySelector('#create-tokens');
   const crusade = document.querySelector('#crusade-toggle');
   const createTapped = document.querySelector('#create-tapped-toggle');

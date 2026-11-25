@@ -87,3 +87,17 @@ body.token-overlay, html:has(.token-overlay) { margin: 0; background: transparen
   right: auto;
   transform: translate(-65%, -65%);
 }
+
+.token-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin: 0 0 20px; }
+.token-summary > div { display: flex; flex-direction: column; gap: 4px; padding: 14px 10px; border: 1px solid var(--line); background: var(--panel); border-radius: 12px; min-width: 0; }
+.token-summary strong { color: #e3c4ff; font: 800 clamp(24px,4vw,38px)/1.1 system-ui,sans-serif; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.token-summary span { color: var(--muted); font-size: .85rem; }
+.token-buffs h2 { font: 700 1.1rem/1.2 system-ui,sans-serif; margin: 0 0 14px; }
+.token-buff-add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.token-controls .token-buff-add button { margin: 0; }
+#token-buff-list { display: grid; gap: 8px; }
+.token-buff-item { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #35284466; }
+.token-buff-item > strong { color: #e3c4ff; white-space: nowrap; }
+.token-buff-item > span { font-size: .9rem; overflow-wrap: anywhere; }
+.token-controls .token-buff-item button { margin: 0; }
+@media (max-width: 480px) { .token-summary { grid-template-columns: repeat(2,minmax(0,1fr)); } }

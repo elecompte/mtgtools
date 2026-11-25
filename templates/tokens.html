@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Battlefield tokens{% endblock %}
 {% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-no-fade-19">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-buffs-20">{% endblock %}
 {% block content %}
 {% if control %}
 <main class="library token-controls">
-<h1>Battlefield tokens</h1>
-<p>Statues are 1/1 Sculpture Treasure artifact creatures; Thopters are 1/1 artifact creatures with flying. Gnomes start at 1/1. Each type and power/toughness group shows ready, summoning-sick and tapped tokens. Buttons act on one token per click, or the whole P/T group when marked ALL. UNTAPPED means ready and untapped; SICK targets untapped sick tokens. TAPPED includes tapped sick tokens.</p>
+<div id="token-summary" class="token-summary" aria-label="Battlefield totals" aria-live="polite">
+<div><strong id="summary-tokens">0</strong><span>Tokens</span></div>
+<div><strong id="summary-untapped">0</strong><span>Untapped</span></div>
+<div><strong id="summary-tapped">0</strong><span>Tapped</span></div>
+<div><strong id="summary-power">0</strong><span>Total power</span></div>
+</div>
 <label for="token-url">OBS Browser Source · 1200 × 900 · 4:3</label>
 <input id="token-url" readonly onclick="this.select()">
 <form id="create-tokens" class="token-create">
@@ -39,17 +43,30 @@
 <button type="button" data-bulk="kill">KILL</button>
 </div>
 </section>
+<section class="token-actions token-buffs" aria-label="Static buffs">
+<h2>Static buffs</h2>
+<div class="token-filter-chips" role="group" aria-label="Token types to buff">
+{% for kind, definition in token_types.items() %}
+<button type="button" data-buff-type="{{ kind }}" aria-pressed="{{ 'true' if kind == 'statue' else 'false' }}">{{ definition.name }}</button>
+{% endfor %}
+</div>
+<div class="token-buff-add">
+<button type="button" data-add-buff="1">Add +1/+1</button>
+<button type="button" data-add-buff="0">Add +1/+0</button>
+</div>
+<p class="token-selection-hint">Applies to current and future tokens of the selected types. Each buff stacks separately.</p>
+<div id="token-buff-list" aria-label="Active static buffs"></div>
+</section>
 <div class="token-utilities">
 <button type="button" data-action="next_turn">Next turn · untap & ready all</button>
 <button type="button" data-action="undo">Undo</button>
 </div>
 <p id="token-status" role="status"></p>
-<div id="token-summary"></div>
 <div id="token-groups"></div>
 </main>
 {% else %}
 <div id="token-canvas"><div id="token-groups" aria-label="Battlefield tokens"></div></div>
 {% endif %}
 <script id="token-type-config" type="application/json">{{ token_types|tojson }}</script>
-<script src="/static/js/tokens.js?v=token-art-17" defer></script>
+<script src="/static/js/tokens.js?v=token-buffs-20" defer></script>
 {% endblock %}
