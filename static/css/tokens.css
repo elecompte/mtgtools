@@ -10,7 +10,7 @@ body.token-overlay, html:has(.token-overlay) { margin: 0; background: transparen
 .statue-art { position: relative; width: 100%; aspect-ratio: 1; }
 .statue-icon { position: absolute; inset: 0; display: block; background: url('/static/img/tiki-statues.png') no-repeat; background-size: 400% 200%; }
 .state-tapped .statue-icon { transform: rotate(90deg); }
-.state-sick .statue-icon { opacity: .4; }
+.state-sick .statue-icon { opacity: .7; }
 .statue-quantity {
   position: absolute;
   right: 0;
