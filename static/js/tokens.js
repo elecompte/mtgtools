@@ -235,7 +235,8 @@ function fitTokenBoard() {
   tokenGroups.style.width = (columns * 400) + 'px';
   tokenGroups.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';
   const groupHeight = Math.max(1, ...[...tokenGroups.children].map(card => card.offsetHeight));
-  const preferredHeight = count < 4 ? canvasHeight / 3 : count === 4 ? 270 : 240;
+  // Keep groups half-canvas tall until the row width (or total height) requires shrinking.
+  const preferredHeight = canvasHeight / 2;
   const scale = Math.min(preferredHeight / groupHeight,
     canvasWidth / (columns * 400), canvasHeight / Math.max(tokenGroups.scrollHeight, 1));
   tokenGroups.style.transform = 'scale(' + scale + ')';

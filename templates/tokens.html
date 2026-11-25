@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Battlefield tokens{% endblock %}
 {% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-gnomes-13">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-size-14">{% endblock %}
 {% block content %}
 {% if control %}
 <main class="library token-controls">
@@ -51,5 +51,5 @@
 <div id="token-canvas"><div id="token-groups" aria-label="Battlefield tokens"></div></div>
 {% endif %}
 <script id="token-type-config" type="application/json">{{ token_types|tojson }}</script>
-<script src="/static/js/tokens.js?v=token-gnomes-13" defer></script>
+<script src="/static/js/tokens.js?v=token-size-14" defer></script>
 {% endblock %}
