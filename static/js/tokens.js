@@ -75,9 +75,9 @@ function renderTokens(state) {
       const art = tokenElement('div', null, 'statue-art');
       const icon = tokenElement('span', null, 'statue-icon');
       icon.style.backgroundImage = 'url("' + definition.image + '")';
-      const variant = counters % 8;
+      const variant = members[0].group.variant ?? (kind === 'statue' ? 3 : 0);
       icon.style.backgroundPosition = ((variant % 4) * 100 / 3) + '% ' + (Math.floor(variant / 4) * 100) + '%';
-      icon.style.filter = 'hue-rotate(' + (Math.floor(counters / 8) * 47 % 360) + 'deg) drop-shadow(0 2px 2px #000a) drop-shadow(0 4px 5px #0009)';
+      icon.style.filter = 'drop-shadow(0 2px 2px #000a) drop-shadow(0 4px 5px #0009)';
       icon.setAttribute('role', 'img');
       icon.setAttribute('aria-label', definition.name + ' variant ' + (variant + 1));
       const badge = tokenElement('strong', quantity, 'statue-quantity');

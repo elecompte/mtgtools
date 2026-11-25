@@ -2,6 +2,7 @@
 from contextlib import closing
 import json
 import os
+import secrets
 import sqlite3
 
 from flask import Blueprint, abort, jsonify, render_template, request
@@ -12,6 +13,46 @@ TOKEN_TYPES = {
     "gnome": {"name": "Gnome", "plural": "Gnomes", "image": "/static/img/gnomes.png", "base": 1},
     "thopter": {"name": "Thopter", "plural": "Thopters", "image": "/static/img/thopters.png", "base": 1},
 }
+
+
+def artwork_key(group):
+    return (group.get("type", "statue"), group["counters"])
+
+
+def assign_artwork(groups, previous=None):
+    """Keep resident/moving group artwork; give newly split groups a fresh choice."""
+    cohorts = {}
+    for group in groups:
+        if group["quantity"]:
+            cohorts.setdefault(artwork_key(group), []).append(group)
+    resident_sources = {key for key, members in cohorts.items()
+                        if any(g.get("_art_source") == key for g in members)}
+    chosen = {}
+    for key, members in cohorts.items():
+        if previous is None:
+            candidates = members
+        else:
+            residents = [g for g in members if g.get("_art_source") == key]
+            moving = [g for g in members if g.get("_art_source") is not None
+                      and g["_art_source"] not in resident_sources]
+            candidates = residents or moving
+        for candidate in candidates:
+            if type(candidate.get("variant")) is int and 0 <= candidate["variant"] < 8:
+                chosen[key] = candidate["variant"]
+                break
+    for key in cohorts:
+        if key in chosen:
+            continue
+        kind = key[0]
+        used = {variant for other, variant in chosen.items() if other[0] == kind}
+        initial_statue = kind == "statue" and not used and not any(
+            artwork_key(group)[0] == kind for group in (previous or []))
+        choices = [variant for variant in range(8) if variant not in used] or list(range(8))
+        chosen[key] = 3 if initial_statue else secrets.choice(choices)
+    for group in groups:
+        group.pop("_art_source", None)
+        if group["quantity"]:
+            group["variant"] = chosen[artwork_key(group)]
 
 
 def selected_types(data):
@@ -47,6 +88,10 @@ def state():
         row = db.execute("SELECT state FROM battlefield WHERE id=1").fetchone()
         frame = json.loads(row[0]) if row else {"groups": [], "history": []}
         groups = frame["groups"]
+        # Migrate older battlefield state once, under the same SQLite transaction.
+        before_artwork = json.dumps(groups)
+        assign_artwork(groups)
+        artwork_migrated = before_artwork != json.dumps(groups)
         if request.method == "POST":
             data = request.get_json()
             if not isinstance(data, dict):
@@ -54,6 +99,9 @@ def state():
             action = data.get("action")
             previous = json.loads(json.dumps(groups))
             quantity = number(data, "quantity")
+            if action != "undo":
+                for group in groups:
+                    group["_art_source"] = artwork_key(group)
             if action == "undo":
                 if frame["history"]:
                     groups = frame["history"].pop()
@@ -162,7 +210,7 @@ def state():
                     abort(409)
                 group = groups[index]
                 # Reject edits based on a stale controller's group.
-                if data.get("group") != group:
+                if data.get("group") != {key: value for key, value in group.items() if key != "_art_source"}:
                     abort(409)
                 if quantity == 0 or quantity > group["quantity"]:
                     abort(400)
@@ -180,6 +228,7 @@ def state():
                     groups.append(selected)
             else:
                 abort(400)
+            assign_artwork(groups, None if action == "undo" else previous)
             merged = {}
             for group in groups:
                 if not group["quantity"]:
@@ -193,6 +242,8 @@ def state():
             if action != "undo":
                 frame["history"] = (frame["history"] + [previous])[-20:]
             frame["groups"] = groups
+            db.execute("INSERT OR REPLACE INTO battlefield VALUES(1, ?)", (json.dumps(frame),))
+        elif artwork_migrated:
             db.execute("INSERT OR REPLACE INTO battlefield VALUES(1, ?)", (json.dumps(frame),))
         response = jsonify(groups=groups, can_undo=bool(frame["history"]))
         response.cache_control.no_store = True
