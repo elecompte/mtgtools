@@ -9,8 +9,8 @@ from flask import Blueprint, abort, jsonify, render_template, request
 
 tokens = Blueprint("tokens", __name__)
 TOKEN_TYPES = {
-    "statue": {"name": "Statue", "plural": "Statues", "image": "/static/img/tiki-statues.png", "base": 1},
-    "goblin": {"name": "Goblin", "plural": "Goblins", "image": "/static/img/goblins.png", "base": 1},
+    "statue": {"name": "Statue", "plural": "Statues", "image": "/static/img/tiki-statues.png", "base": 1, "initial_variant": 3},
+    "goblin": {"name": "Goblin", "plural": "Goblins", "image": "/static/img/goblins.png", "base": 1, "initial_variant": 4},
     "gnome": {"name": "Gnome", "plural": "Gnomes", "image": "/static/img/gnomes.png?v=cartoon-2", "base": 1},
     "servo": {"name": "Servo", "plural": "Servos", "image": "/static/img/servos.png", "base": 1},
     "toy": {"name": "Toy", "plural": "Toys", "image": "/static/img/toys.png", "base": 1, "variants": 9, "columns": 3, "rows": 3},
@@ -48,11 +48,12 @@ def assign_artwork(groups, previous=None):
             continue
         kind = key[0]
         used = {variant for other, variant in chosen.items() if other[0] == kind}
-        initial_statue = kind == "statue" and not used and not any(
+        initial_variant = TOKEN_TYPES[kind].get("initial_variant")
+        use_initial = initial_variant is not None and not used and not any(
             artwork_key(group)[0] == kind for group in (previous or []))
         count = TOKEN_TYPES[kind].get("variants", 8)
         choices = [variant for variant in range(count) if variant not in used] or list(range(count))
-        chosen[key] = 3 if initial_statue else secrets.choice(choices)
+        chosen[key] = initial_variant if use_initial else secrets.choice(choices)
     for group in groups:
         group.pop("_art_source", None)
         if group["quantity"]:
