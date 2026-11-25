@@ -11,6 +11,7 @@ tokens = Blueprint("tokens", __name__)
 TOKEN_TYPES = {
     "statue": {"name": "Statue", "plural": "Statues", "image": "/static/img/tiki-statues.png", "base": 1},
     "gnome": {"name": "Gnome", "plural": "Gnomes", "image": "/static/img/gnomes.png?v=cartoon-2", "base": 1},
+    "toy": {"name": "Toy", "plural": "Toys", "image": "/static/img/toys.png", "base": 1, "variants": 9, "columns": 3, "rows": 3},
     "thopter": {"name": "Thopter", "plural": "Thopters", "image": "/static/img/thopters.png", "base": 1},
 }
 
@@ -37,7 +38,7 @@ def assign_artwork(groups, previous=None):
                       and g["_art_source"] not in resident_sources]
             candidates = residents or moving
         for candidate in candidates:
-            if type(candidate.get("variant")) is int and 0 <= candidate["variant"] < 8:
+            if type(candidate.get("variant")) is int and 0 <= candidate["variant"] < TOKEN_TYPES[key[0]].get("variants", 8):
                 chosen[key] = candidate["variant"]
                 break
     for key in cohorts:
@@ -47,7 +48,8 @@ def assign_artwork(groups, previous=None):
         used = {variant for other, variant in chosen.items() if other[0] == kind}
         initial_statue = kind == "statue" and not used and not any(
             artwork_key(group)[0] == kind for group in (previous or []))
-        choices = [variant for variant in range(8) if variant not in used] or list(range(8))
+        count = TOKEN_TYPES[kind].get("variants", 8)
+        choices = [variant for variant in range(count) if variant not in used] or list(range(count))
         chosen[key] = 3 if initial_statue else secrets.choice(choices)
     for group in groups:
         group.pop("_art_source", None)

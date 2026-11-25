@@ -102,7 +102,10 @@ function renderTokens(state) {
       const icon = tokenElement('span', null, 'statue-icon');
       icon.style.backgroundImage = 'url("' + definition.image + '")';
       const variant = members[0].group.variant ?? (kind === 'statue' ? 3 : 0);
-      icon.style.backgroundPosition = ((variant % 4) * 100 / 3) + '% ' + (Math.floor(variant / 4) * 100) + '%';
+      const columns = definition.columns || 4, rows = definition.rows || 2;
+      icon.style.backgroundSize = (columns * 100) + '% ' + (rows * 100) + '%';
+      icon.style.backgroundPosition = ((variant % columns) * 100 / Math.max(1, columns - 1)) + '% ' +
+        (Math.floor(variant / columns) * 100 / Math.max(1, rows - 1)) + '%';
       icon.style.filter = 'drop-shadow(0 2px 2px #000a) drop-shadow(0 4px 5px #0009)';
       icon.setAttribute('role', 'img');
       icon.setAttribute('aria-label', definition.name + ' variant ' + (variant + 1));
