@@ -22,6 +22,7 @@ STORES = [
         "storeName": "Salisbury",
         "api": "https://portalsgamessby.tcgplayerpro.com/api/catalog/search",
         "baseUrl": "https://portalsgamessby.tcgplayerpro.com",
+        "query_search": True,
     },
     {
         "storeName": "Easton",
@@ -33,6 +34,7 @@ STORES = [
         "storeName": "Kent Island",
         "api": "https://portalsgameski.tcgplayerpro.com/api/catalog/search",
         "baseUrl": "https://portalsgameski.tcgplayerpro.com",
+        "query_search": True,
     },
 ]
 
