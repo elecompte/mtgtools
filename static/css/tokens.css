@@ -101,3 +101,9 @@ body.token-overlay, html:has(.token-overlay) { margin: 0; background: transparen
 .token-buff-item > span { font-size: .9rem; overflow-wrap: anywhere; }
 .token-controls .token-buff-item button { margin: 0; }
 @media (max-width: 480px) { .token-summary { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+
+.token-base-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.token-controls .token-base-controls input { margin: 0; min-height: 44px; }
+.token-controls .token-base-controls button { margin: 0; }
+.token-base-controls output { font-size: 1.25rem; font-weight: 800; color: #e3c4ff; }
+.token-base-form > label { font-weight: 700; }

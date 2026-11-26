@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Battlefield tokens{% endblock %}
 {% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-buffs-20">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-soldiers-22">{% endblock %}
 {% block content %}
 {% if control %}
 <main class="library token-controls">
@@ -28,6 +28,17 @@
 <button type="button" id="create-tapped-toggle" aria-pressed="false">Tapped</button>
 <button type="button" id="crusade-toggle" aria-pressed="false" title="Each new token adds a Crusade trigger, giving all tokens that many counters">Cathars’ Crusade</button>
 </form>
+{% for kind, definition in token_types.items() if definition.dynamic_base %}
+<form class="token-base-form" data-base-type="{{ kind }}">
+<label for="base-{{ kind }}">{{ definition.name }} base X/X</label>
+<div class="token-base-controls">
+<input id="base-{{ kind }}" name="base" type="number" min="0" max="1000000" value="0" required aria-describedby="base-help-{{ kind }}">
+<button type="submit">Set P/T for all</button>
+<output aria-live="polite">0/0</output>
+</div>
+<p id="base-help-{{ kind }}" class="token-selection-hint">Set X from your creature/artifact count. Applies to all current and future {{ definition.plural|lower }}. Counters and static buffs are added on top.</p>
+</form>
+{% endfor %}
 <section class="token-actions" aria-label="Actions on selected tokens">
 <div class="token-filter-chips" role="group" aria-label="Token selection">
 <button type="button" data-filter="all" aria-pressed="true">All</button>
@@ -68,5 +79,5 @@
 <div id="token-canvas"><div id="token-groups" aria-label="Battlefield tokens"></div></div>
 {% endif %}
 <script id="token-type-config" type="application/json">{{ token_types|tojson }}</script>
-<script src="/static/js/tokens.js?v=token-toys-21" defer></script>
+<script src="/static/js/tokens.js?v=token-soldiers-22" defer></script>
 {% endblock %}

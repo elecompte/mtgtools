@@ -51,7 +51,8 @@ function updateBulkControls() {
   document.querySelector('#token-selected-count').textContent = count + ' selected';
 }
 function tokenStats(group) {
-  const base = tokenDefinitions[groupType(group)].base + group.counters;
+  const kind = groupType(group), definition = tokenDefinitions[kind];
+  const base = (definition.dynamic_base ? (tokenState.bases?.[kind] ?? definition.base) : definition.base) + group.counters;
   const buffs = (tokenState.buffs || []).filter(buff => buff.types.includes(groupType(group)));
   return {
     power:base + buffs.reduce((sum, buff) => sum + buff.power, 0),
@@ -167,6 +168,13 @@ function renderTokens(state) {
     document.querySelector('#summary-tapped').textContent = sum(g=>g.tapped).toLocaleString();
     document.querySelector('#summary-power').textContent = state.groups.reduce((n,g) => n + g.quantity * tokenStats(g).power, 0).toLocaleString();
     renderBuffs();
+    document.querySelectorAll('[data-base-type]').forEach(form => {
+      const input = form.elements.base;
+      const saved = state.bases?.[form.dataset.baseType] ?? tokenDefinitions[form.dataset.baseType].base;
+      if (input.value !== '' && Number(input.value) === saved) input.dataset.dirty = 'false';
+      if (input.dataset.dirty !== 'true') input.value = saved;
+      form.querySelector('output').textContent = saved + '/' + saved;
+    });
     document.querySelector('[data-action=undo]').disabled = !state.can_undo;
     renderBulkTypeChips();
     updateBulkControls();
@@ -192,6 +200,13 @@ async function performTokenAction(action) {
   } finally { busy = false; }
 }
 if (tokenControl) {
+  document.querySelectorAll('[data-base-type]').forEach(form => {
+    form.elements.base.addEventListener('input', () => { form.elements.base.dataset.dirty = 'true'; });
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      sendTokenAction({action:'set_base', type:form.dataset.baseType, value:Number(form.elements.base.value)});
+    });
+  });
   document.querySelectorAll('[data-buff-type]').forEach(button => button.addEventListener('click', () => {
     const kind = button.dataset.buffType;
     if (buffTypes.has(kind)) buffTypes.delete(kind); else buffTypes.add(kind);

@@ -12,6 +12,7 @@ TOKEN_TYPES = {
     "angel": {"name": "Angel", "plural": "Angels", "image": "/static/img/angels.png", "base": 4, "initial_variant": 1},
     "statue": {"name": "Statue", "plural": "Statues", "image": "/static/img/tiki-statues.png", "base": 1, "initial_variant": 3},
     "goblin": {"name": "Goblin", "plural": "Goblins", "image": "/static/img/goblins.png", "base": 1, "initial_variant": 4},
+    "gnome_soldier": {"name": "Gnome Soldier", "plural": "Gnome Soldiers", "image": "/static/img/gnome-soldiers.png", "base": 0, "dynamic_base": True},
     "gnome": {"name": "Gnome", "plural": "Gnomes", "image": "/static/img/gnomes.png?v=cartoon-2", "base": 1},
     "servo": {"name": "Servo", "plural": "Servos", "image": "/static/img/servos.png", "base": 1},
     "toy": {"name": "Toy", "plural": "Toys", "image": "/static/img/toys.png", "base": 1, "variants": 9, "columns": 3, "rows": 3},
@@ -95,6 +96,7 @@ def state():
         frame = json.loads(row[0]) if row else {"groups": [], "history": []}
         groups = frame["groups"]
         buffs = frame.get("buffs", [])
+        bases = frame.get("bases", {})
         # Migrate older battlefield state once, under the same SQLite transaction.
         before_artwork = json.dumps(groups)
         assign_artwork(groups)
@@ -106,6 +108,7 @@ def state():
             action = data.get("action")
             previous = json.loads(json.dumps(groups))
             previous_buffs = json.loads(json.dumps(buffs))
+            previous_bases = dict(bases)
             quantity = number(data, "quantity")
             if action != "undo":
                 for group in groups:
@@ -114,9 +117,15 @@ def state():
                 if frame["history"]:
                     snapshot = frame["history"].pop()
                     if isinstance(snapshot, list):
-                        groups, buffs = snapshot, []
+                        groups, buffs, bases = snapshot, [], {}
                     else:
                         groups, buffs = snapshot["groups"], snapshot.get("buffs", [])
+                        bases = snapshot.get("bases", {})
+            elif action == "set_base":
+                kind = data.get("type")
+                if not isinstance(kind, str) or not TOKEN_TYPES.get(kind, {}).get("dynamic_base"):
+                    abort(400)
+                bases[kind] = number(data, "value", 0)
             elif action == "add_buff":
                 kinds = selected_types(data)
                 toughness = data.get("toughness")
@@ -266,12 +275,13 @@ def state():
                     merged[key]["quantity"] += group["quantity"]
             groups = sorted(merged.values(), key=lambda g: (g.get("type", "statue"), g["counters"], g["tapped"], g["sick"]))
             if action != "undo":
-                frame["history"] = (frame["history"] + [{"groups": previous, "buffs": previous_buffs}])[-20:]
+                frame["history"] = (frame["history"] + [{"groups": previous, "buffs": previous_buffs, "bases": previous_bases}])[-20:]
             frame["groups"] = groups
             frame["buffs"] = buffs
+            frame["bases"] = bases
             db.execute("INSERT OR REPLACE INTO battlefield VALUES(1, ?)", (json.dumps(frame),))
         elif artwork_migrated:
             db.execute("INSERT OR REPLACE INTO battlefield VALUES(1, ?)", (json.dumps(frame),))
-        response = jsonify(groups=groups, buffs=buffs, can_undo=bool(frame["history"]))
+        response = jsonify(groups=groups, buffs=buffs, bases=bases, can_undo=bool(frame["history"]))
         response.cache_control.no_store = True
         return response
