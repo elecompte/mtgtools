@@ -67,6 +67,23 @@ function tokenStats(group) {
     toughness:base + buffs.reduce((sum, buff) => sum + buff.toughness, 0)
   };
 }
+function tokenCombatTotals() {
+  const totals = Object.fromEntries(['power', 'flying-power', 'ground-power',
+    'toughness', 'flying-toughness', 'ground-toughness'].map(key => [key, [0, 0]]));
+  for (const group of tokenState.groups) {
+    const stats = tokenStats(group);
+    const ready = !group.tapped && !tokenIsSick(group);
+    const category = tokenHasAbility(group, 'flying') ? 'flying-' : 'ground-';
+    for (const stat of ['power', 'toughness']) {
+      const amount = group.quantity * stats[stat];
+      for (const key of [stat, category + stat]) {
+        if (ready) totals[key][0] += amount;
+        totals[key][1] += amount;
+      }
+    }
+  }
+  return totals;
+}
 function renderBuffs() {
   const host = document.querySelector('#token-buff-list');
   host.replaceChildren();
@@ -183,7 +200,11 @@ function renderTokens(state) {
     document.querySelector('#summary-tokens').textContent = sum(()=>true).toLocaleString();
     document.querySelector('#summary-untapped').textContent = sum(g=>!g.tapped).toLocaleString();
     document.querySelector('#summary-tapped').textContent = sum(g=>g.tapped).toLocaleString();
-    document.querySelector('#summary-power').textContent = state.groups.reduce((n,g) => n + g.quantity * tokenStats(g).power, 0).toLocaleString();
+    for (const [key, [ready, total]] of Object.entries(tokenCombatTotals())) {
+      const value = document.querySelector('#summary-' + key);
+      value.textContent = ready.toLocaleString() + ' / ' + total.toLocaleString();
+      value.setAttribute('aria-label', ready.toLocaleString() + ' available to attack, ' + total.toLocaleString() + ' across all tokens');
+    }
     renderBuffs();
     document.querySelectorAll('[data-base-type]').forEach(form => {
       const input = form.elements.base;

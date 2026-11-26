@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Battlefield tokens{% endblock %}
 {% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-abilities-23">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-combat-24">{% endblock %}
 {% block content %}
 {% if control %}
 <main class="library token-controls">
@@ -9,8 +9,14 @@
 <div><strong id="summary-tokens">0</strong><span>Tokens</span></div>
 <div><strong id="summary-untapped">0</strong><span>Untapped</span></div>
 <div><strong id="summary-tapped">0</strong><span>Tapped</span></div>
-<div><strong id="summary-power">0</strong><span>Total power</span></div>
+<div class="combat-total"><strong id="summary-power">0 / 0</strong><span>Total power</span></div>
+<div class="combat-total"><strong id="summary-flying-power">0 / 0</strong><span>Flying power</span></div>
+<div class="combat-total"><strong id="summary-ground-power">0 / 0</strong><span>Ground power</span></div>
+<div class="combat-total"><strong id="summary-toughness">0 / 0</strong><span>Total toughness</span></div>
+<div class="combat-total"><strong id="summary-flying-toughness">0 / 0</strong><span>Flying toughness</span></div>
+<div class="combat-total"><strong id="summary-ground-toughness">0 / 0</strong><span>Ground toughness</span></div>
 </div>
+<p class="token-totals-key">Power &amp; toughness: available to attack / all tokens</p>
 <label for="token-url">OBS Browser Source · 1200 × 900 · 4:3</label>
 <input id="token-url" readonly onclick="this.select()">
 <form id="create-tokens" class="token-create">
@@ -81,5 +87,5 @@
 <div id="token-canvas"><div id="token-groups" aria-label="Battlefield tokens"></div></div>
 {% endif %}
 <script id="token-type-config" type="application/json">{{ token_types|tojson }}</script>
-<script src="/static/js/tokens.js?v=token-abilities-23" defer></script>
+<script src="/static/js/tokens.js?v=token-combat-24" defer></script>
 {% endblock %}
