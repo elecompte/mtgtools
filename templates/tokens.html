@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Battlefield tokens{% endblock %}
 {% block page %}{{ 'token-control' if control else 'token-overlay' }}{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-soldiers-22">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/tokens.css?v=token-abilities-23">{% endblock %}
 {% block content %}
 {% if control %}
 <main class="library token-controls">
@@ -64,8 +64,10 @@
 <div class="token-buff-add">
 <button type="button" data-add-buff="1">Add +1/+1</button>
 <button type="button" data-add-buff="0">Add +1/+0</button>
+<button type="button" data-add-buff="haste">Add Haste</button>
+<button type="button" data-add-buff="flying">Add Flying</button>
 </div>
-<p class="token-selection-hint">Applies to current and future tokens of the selected types. Each buff stacks separately.</p>
+<p class="token-selection-hint">Applies to current and future tokens of the selected types. Each buff is listed separately. Haste overrides summoning sickness while active.</p>
 <div id="token-buff-list" aria-label="Active static buffs"></div>
 </section>
 <div class="token-utilities">
@@ -79,5 +81,5 @@
 <div id="token-canvas"><div id="token-groups" aria-label="Battlefield tokens"></div></div>
 {% endif %}
 <script id="token-type-config" type="application/json">{{ token_types|tojson }}</script>
-<script src="/static/js/tokens.js?v=token-soldiers-22" defer></script>
+<script src="/static/js/tokens.js?v=token-abilities-23" defer></script>
 {% endblock %}

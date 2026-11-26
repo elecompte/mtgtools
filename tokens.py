@@ -9,15 +9,22 @@ from flask import Blueprint, abort, jsonify, render_template, request
 
 tokens = Blueprint("tokens", __name__)
 TOKEN_TYPES = {
-    "angel": {"name": "Angel", "plural": "Angels", "image": "/static/img/angels.png", "base": 4, "initial_variant": 1},
+    "angel": {"name": "Angel", "plural": "Angels", "image": "/static/img/angels.png", "base": 4, "initial_variant": 1, "abilities": ["flying"]},
     "statue": {"name": "Statue", "plural": "Statues", "image": "/static/img/tiki-statues.png", "base": 1, "initial_variant": 3},
     "goblin": {"name": "Goblin", "plural": "Goblins", "image": "/static/img/goblins.png", "base": 1, "initial_variant": 4},
     "gnome_soldier": {"name": "Gnome Soldier", "plural": "Gnome Soldiers", "image": "/static/img/gnome-soldiers.png", "base": 0, "dynamic_base": True},
     "gnome": {"name": "Gnome", "plural": "Gnomes", "image": "/static/img/gnomes.png?v=cartoon-2", "base": 1},
     "servo": {"name": "Servo", "plural": "Servos", "image": "/static/img/servos.png", "base": 1},
     "toy": {"name": "Toy", "plural": "Toys", "image": "/static/img/toys.png", "base": 1, "variants": 9, "columns": 3, "rows": 3},
-    "thopter": {"name": "Thopter", "plural": "Thopters", "image": "/static/img/thopters.png", "base": 1},
+    "thopter": {"name": "Thopter", "plural": "Thopters", "image": "/static/img/thopters.png", "base": 1, "abilities": ["flying"]},
 }
+
+
+def is_summoning_sick(group, buffs):
+    kind = group.get("type", "statue")
+    haste = "haste" in TOKEN_TYPES[kind].get("abilities", []) or any(
+        buff.get("ability") == "haste" and kind in buff["types"] for buff in buffs)
+    return group["sick"] and not haste
 
 
 def artwork_key(group):
@@ -128,10 +135,17 @@ def state():
                 bases[kind] = number(data, "value", 0)
             elif action == "add_buff":
                 kinds = selected_types(data)
-                toughness = data.get("toughness")
-                if type(toughness) is not int or toughness not in (0, 1):
-                    abort(400)
-                buffs.append({"id": secrets.token_hex(12), "types": kinds, "power": 1, "toughness": toughness})
+                if "ability" in data:
+                    ability = data["ability"]
+                    if ability not in ("haste", "flying"):
+                        abort(400)
+                    buff = {"id": secrets.token_hex(12), "types": kinds, "power": 0, "toughness": 0, "ability": ability}
+                else:
+                    toughness = data.get("toughness")
+                    if type(toughness) is not int or toughness not in (0, 1):
+                        abort(400)
+                    buff = {"id": secrets.token_hex(12), "types": kinds, "power": 1, "toughness": toughness}
+                buffs.append(buff)
             elif action == "remove_buff":
                 buff_id = data.get("id")
                 if not isinstance(buff_id, str):
@@ -211,13 +225,13 @@ def state():
                     elif operation == "untap":
                         eligible = eligible and group["tapped"]
                     if target == "ready":
-                        eligible = eligible and not group["sick"]
+                        eligible = eligible and not is_summoning_sick(group, buffs)
                     elif target == "sick":
-                        eligible = eligible and group["sick"]
+                        eligible = eligible and is_summoning_sick(group, buffs)
                         if operation in {"counter", "kill"}:
                             eligible = eligible and not group["tapped"]
                     elif target == "untapped":
-                        eligible = eligible and not group["tapped"] and not group["sick"]
+                        eligible = eligible and not group["tapped"] and not is_summoning_sick(group, buffs)
                     elif target == "tapped":
                         eligible = eligible and group["tapped"]
                     if eligible and (all_tokens or not selected_any):

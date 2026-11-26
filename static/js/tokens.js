@@ -50,6 +50,14 @@ function updateBulkControls() {
   const count = tokenState.groups.filter(group => bulkMatches(group)).reduce((sum, group) => sum + group.quantity, 0);
   document.querySelector('#token-selected-count').textContent = count + ' selected';
 }
+function tokenHasAbility(group, ability) {
+  const kind = groupType(group);
+  return (tokenDefinitions[kind].abilities || []).includes(ability) ||
+    (tokenState.buffs || []).some(buff => buff.ability === ability && buff.types.includes(kind));
+}
+function tokenIsSick(group) {
+  return group.sick && !tokenHasAbility(group, 'haste');
+}
 function tokenStats(group) {
   const kind = groupType(group), definition = tokenDefinitions[kind];
   const base = (definition.dynamic_base ? (tokenState.bases?.[kind] ?? definition.base) : definition.base) + group.counters;
@@ -66,10 +74,11 @@ function renderBuffs() {
   (tokenState.buffs || []).forEach(buff => {
     const item = tokenElement('div', null, 'token-buff-item');
     const names = buff.types.map(kind => tokenDefinitions[kind].name).join(', ');
-    item.append(tokenElement('strong', '+' + buff.power + '/+' + buff.toughness), tokenElement('span', names));
+    const label = buff.ability ? buff.ability[0].toUpperCase() + buff.ability.slice(1) : '+' + buff.power + '/+' + buff.toughness;
+    item.append(tokenElement('strong', label), tokenElement('span', names));
     const remove = tokenElement('button', 'Remove');
     remove.type = 'button';
-    remove.setAttribute('aria-label', 'Remove +' + buff.power + '/+' + buff.toughness + ' buff for ' + names);
+    remove.setAttribute('aria-label', 'Remove ' + label + ' buff for ' + names);
     remove.addEventListener('click', () => sendTokenAction({action:'remove_buff', id:buff.id}));
     item.append(remove);
     host.append(item);
@@ -88,8 +97,8 @@ function renderTokens(state) {
     const scene = tokenElement('div', null, 'statue-scene');
     const management = tokenElement('div', null, 'statue-management');
     const states = [
-      {key:'ready', label:'Ready', select:group => !group.tapped && !group.sick},
-      {key:'sick', label:'Summoning sick', select:group => !group.tapped && group.sick},
+      {key:'ready', label:'Ready', select:group => !group.tapped && !tokenIsSick(group)},
+      {key:'sick', label:'Summoning sick', select:group => !group.tapped && tokenIsSick(group)},
       {key:'tapped', label:'Tapped', select:group => group.tapped}
     ];
     let visibleStates = 0;
@@ -121,7 +130,15 @@ function renderTokens(state) {
     }
     scene.dataset.count = visibleStates;
     const visual = tokenElement('div', null, 'token-group-visual');
-    visual.append(scene, tokenElement('strong', stats.power + '/' + stats.toughness, 'statue-pt'));
+    const pt = tokenElement('strong', stats.power + '/' + stats.toughness, 'statue-pt');
+    if (tokenHasAbility(members[0].group, 'flying')) {
+      const icon = tokenElement('img', null, 'token-ability-icon');
+      icon.src = '/static/img/flying.svg';
+      icon.alt = 'Flying';
+      icon.title = 'Flying';
+      pt.append(icon);
+    }
+    visual.append(scene, pt);
     visual.prepend(tokenElement('strong', definition.name, 'token-group-name'));
     card.append(visual);
     if (tokenControl) {
@@ -139,9 +156,9 @@ function renderTokens(state) {
           const eligible = members.some(({group}) => {
             if (operation === 'tap' && group.tapped) return false;
             if (operation === 'untap' && !group.tapped) return false;
-            if (target === 'ready') return !group.sick;
-            if (target === 'sick') return group.sick && (!['counter', 'kill'].includes(operation) || !group.tapped);
-            if (target === 'untapped') return !group.tapped && !group.sick;
+            if (target === 'ready') return !tokenIsSick(group);
+            if (target === 'sick') return tokenIsSick(group) && (!['counter', 'kill'].includes(operation) || !group.tapped);
+            if (target === 'untapped') return !group.tapped && !tokenIsSick(group);
             if (target === 'tapped') return group.tapped;
             return true;
           });
@@ -215,7 +232,9 @@ if (tokenControl) {
   }));
   document.querySelectorAll('[data-add-buff]').forEach(button => button.addEventListener('click', () => {
     if (!buffTypes.size) return;
-    sendTokenAction({action:'add_buff', types:[...buffTypes], toughness:Number(button.dataset.addBuff)});
+    const selected = button.dataset.addBuff;
+    const effect = ['haste', 'flying'].includes(selected) ? {ability:selected} : {toughness:Number(selected)};
+    sendTokenAction({action:'add_buff', types:[...buffTypes], ...effect});
   }));
   const createForm = document.querySelector('#create-tokens');
   const crusade = document.querySelector('#crusade-toggle');
