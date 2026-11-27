@@ -11,7 +11,7 @@ tokens = Blueprint("tokens", __name__)
 TOKEN_TYPES = {
     "myr": {"name": "Myr", "plural": "Myr", "image": "/static/img/myr.png", "base": 1},
     "robot": {"name": "Robot", "plural": "Robots", "image": "/static/img/robots.png", "base": 1},
-    "physician_myr": {"name": "Physician Myr", "plural": "Physician Myr", "image": "/static/img/physician-myr.png", "base": 2, "base_toughness": 1},
+    "physician_myr": {"name": "Phyrexian Myr", "plural": "Phyrexian Myr", "image": "/static/img/physician-myr.png", "base": 2, "base_toughness": 1},
     "citizen": {"name": "Citizen", "plural": "Citizens", "image": "/static/img/citizens.png", "base": 1},
     "angel": {"name": "Angel", "plural": "Angels", "image": "/static/img/angels.png", "base": 4, "initial_variant": 1, "abilities": ["flying"]},
     "statue": {"name": "Statue", "plural": "Statues", "image": "/static/img/tiki-statues.png", "base": 1, "initial_variant": 3},
