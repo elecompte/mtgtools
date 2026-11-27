@@ -60,11 +60,12 @@ function tokenIsSick(group) {
 }
 function tokenStats(group) {
   const kind = groupType(group), definition = tokenDefinitions[kind];
-  const base = (definition.dynamic_base ? (tokenState.bases?.[kind] ?? definition.base) : definition.base) + group.counters;
+  const basePower = definition.dynamic_base ? (tokenState.bases?.[kind] ?? definition.base) : definition.base;
+  const baseToughness = definition.base_toughness ?? basePower;
   const buffs = (tokenState.buffs || []).filter(buff => buff.types.includes(groupType(group)));
   return {
-    power:base + buffs.reduce((sum, buff) => sum + buff.power, 0),
-    toughness:base + buffs.reduce((sum, buff) => sum + buff.toughness, 0)
+    power:basePower + group.counters + buffs.reduce((sum, buff) => sum + buff.power, 0),
+    toughness:baseToughness + group.counters + buffs.reduce((sum, buff) => sum + buff.toughness, 0)
   };
 }
 function tokenCombatTotals() {
